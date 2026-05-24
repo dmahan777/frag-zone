@@ -280,6 +280,7 @@ export type Database = {
       profiles: {
         Row: {
           badges: string[]
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -293,6 +294,7 @@ export type Database = {
         }
         Insert: {
           badges?: string[]
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id: string
@@ -306,6 +308,7 @@ export type Database = {
         }
         Update: {
           badges?: string[]
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
