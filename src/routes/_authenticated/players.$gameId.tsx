@@ -132,7 +132,7 @@ function PlayersScreen() {
           });
           return entries.map(([teamName, members]) => (
             <section key={teamName}>
-              <h2 className="font-display font-extrabold text-lg mb-3">{teamName}</h2>
+              <h2 className="font-display font-extrabold text-2xl tracking-tight mb-4">{teamName}</h2>
               <div className="flex flex-wrap gap-x-5 gap-y-4">
                 {members.map((p) => {
                   const pr = profiles[p.user_id];
