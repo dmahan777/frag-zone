@@ -495,26 +495,39 @@ function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId
         })}
       </div>
 
+      {/* Create-a-team form */}
+      <div className="mt-5">
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+      </div>
+
       {/* Groups */}
-      <div className="mt-5 space-y-6">
+      <div className="mt-6 space-y-6">
         {grouped.length === 0 && <p className="text-center text-sm text-muted-foreground py-12">No players match.</p>}
-        {grouped.map(([teamName, members]) => (
-          <div key={teamName}>
-            <h3 className="font-display font-extrabold text-lg mb-3">{teamName}</h3>
-            <div className="grid grid-cols-4 gap-3">
-              {members.map((p) => {
-                const prof = profilesById[p.user_id];
-                const ring = ringFor(p);
-                return (
-                  <div key={p.id} className="flex flex-col items-center gap-1.5">
-                    <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
-                    <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
-                  </div>
-                );
-              })}
+        {grouped.map(([key, members]) => {
+          const team = teams.find((t) => t.id === key);
+          const label = team?.name ?? "Free agents";
+          return (
+            <div key={key}>
+              <div className="flex items-center gap-2 mb-3">
+                {team && <span className="h-4 w-4 rounded-full border border-border" style={{ background: team.color }} />}
+                <h3 className="font-display font-extrabold text-lg">{label}</h3>
+                {team && <span className="text-xs text-muted-foreground">({members.length}/{team.max_members})</span>}
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {members.map((p) => {
+                  const prof = profilesById[p.user_id];
+                  const ring = ringFor(p);
+                  return (
+                    <div key={p.id} className="flex flex-col items-center gap-1.5">
+                      <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
+                      <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
