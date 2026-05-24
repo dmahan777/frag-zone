@@ -32,7 +32,8 @@ function GameScreen() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
   const [tab, setTab] = useState<Tab>("Activity");
-  const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [locations, setLocations] = useState<Record<string, { lat: number; lng: number }>>({});
+  const myPos = useLiveLocation(gameId, user?.id);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
