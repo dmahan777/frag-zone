@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hideNav = pathname === "/menu";
 
   useEffect(() => {
     if (loading) return;
@@ -30,10 +32,10 @@ function AuthenticatedLayout() {
 
   return (
     <MobileShell>
-      <div className="min-h-screen pb-28">
+      <div className={`min-h-screen ${hideNav ? "" : "pb-28"}`}>
         <Outlet />
       </div>
-      <BottomNav />
+      {!hideNav && <BottomNav />}
     </MobileShell>
   );
 }
