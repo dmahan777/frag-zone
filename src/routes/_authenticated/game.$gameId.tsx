@@ -172,7 +172,7 @@ function GameScreen() {
             <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="danger" />
           </Link>
           {TABS.map((t) => {
-            const active = t === tab && t !== "Activity";
+            const active = t === tab && t !== "Activity" && t !== "Players";
             const visible = t !== "Admin" || isHost;
             if (!visible) return null;
             return (
@@ -180,6 +180,7 @@ function GameScreen() {
                 key={t}
                 onClick={() => {
                   if (t === "Activity") navigate({ to: "/feed" });
+                  else if (t === "Players") navigate({ to: "/players/$gameId", params: { gameId } });
                   else setTab(t);
                 }}
                 className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition
