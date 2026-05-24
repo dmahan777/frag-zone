@@ -14,20 +14,26 @@ type Game = {
   current_round: number; total_rounds: number;
   rules: string;
   purge_enabled: boolean;
-  purge_interval_minutes: number;
   max_teams: number;
   open_registration: boolean;
   players_per_team: number;
   elimination_approval: boolean;
   inherit_targets: boolean;
   full_team_elimination: boolean;
+  unlimited_rounds: boolean;
+  round_length_days: number;
   random_purge: boolean;
+  random_purge_frequency: string;
+  purge_length_minutes: number;
   daily_purge_enabled: boolean;
   daily_purge_time: string | null;
+  daily_purge_day_of_week: number | null;
 };
 type PlayerRow = { id: string; user_id: string; status: string; team_id: string | null };
 type TeamRow = { id: string; name: string; color: string; max_members: number; created_by: string };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null };
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
@@ -42,6 +48,8 @@ function GameSettingsPage() {
   // Editable state
   const [rules, setRules] = useState("");
   const [totalRounds, setTotalRounds] = useState(1);
+  const [unlimitedRounds, setUnlimitedRounds] = useState(false);
+  const [roundLengthDays, setRoundLengthDays] = useState(1);
 
   // Players & teams
   const [maxTeams, setMaxTeams] = useState(8);
@@ -55,10 +63,12 @@ function GameSettingsPage() {
 
   // Purge
   const [purgeEnabled, setPurgeEnabled] = useState(false);
-  const [purgeMinutes, setPurgeMinutes] = useState(60);
+  const [purgeLengthMinutes, setPurgeLengthMinutes] = useState(30);
   const [randomPurge, setRandomPurge] = useState(false);
+  const [randomPurgeFrequency, setRandomPurgeFrequency] = useState<"daily" | "weekly">("daily");
   const [dailyPurgeEnabled, setDailyPurgeEnabled] = useState(false);
   const [dailyPurgeTime, setDailyPurgeTime] = useState<string>("20:00");
+  const [dailyPurgeDay, setDailyPurgeDay] = useState<number>(1);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
@@ -74,10 +84,14 @@ function GameSettingsPage() {
       setInheritTargets(gg.inherit_targets ?? true);
       setFullTeamElimination(gg.full_team_elimination ?? false);
       setPurgeEnabled(!!gg.purge_enabled);
-      setPurgeMinutes(gg.purge_interval_minutes ?? 60);
+      setPurgeLengthMinutes(gg.purge_length_minutes ?? 30);
       setRandomPurge(!!gg.random_purge);
+      setRandomPurgeFrequency((gg.random_purge_frequency as "daily" | "weekly") ?? "daily");
       setDailyPurgeEnabled(!!gg.daily_purge_enabled);
       setDailyPurgeTime((gg.daily_purge_time ?? "20:00:00").slice(0, 5));
+      setDailyPurgeDay(gg.daily_purge_day_of_week ?? 1);
+      setUnlimitedRounds(!!gg.unlimited_rounds);
+      setRoundLengthDays(gg.round_length_days ?? 1);
     }
     const { data: ps } = await supabase.from("players").select("id, user_id, status, team_id").eq("game_id", gameId);
     const arr = (ps as PlayerRow[]) ?? [];
@@ -123,7 +137,9 @@ function GameSettingsPage() {
     setBusy(true);
     const payload: Partial<Game> = {
       rules: rules.trim().slice(0, 4000),
+      unlimited_rounds: unlimitedRounds,
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
+      round_length_days: Math.max(1, Math.min(14, Math.round(roundLengthDays))),
       max_teams: Math.max(1, Math.min(64, Math.round(maxTeams))),
       open_registration: openRegistration,
       players_per_team: Math.max(1, Math.min(32, Math.round(playersPerTeam))),
@@ -131,10 +147,12 @@ function GameSettingsPage() {
       inherit_targets: inheritTargets,
       full_team_elimination: fullTeamElimination,
       purge_enabled: purgeEnabled,
-      purge_interval_minutes: Math.max(5, Math.min(1440, Math.round(purgeMinutes))),
+      purge_length_minutes: Math.max(1, Math.min(240, Math.round(purgeLengthMinutes))),
       random_purge: randomPurge,
+      random_purge_frequency: randomPurgeFrequency,
       daily_purge_enabled: dailyPurgeEnabled,
       daily_purge_time: dailyPurgeEnabled ? `${dailyPurgeTime}:00` : null,
+      daily_purge_day_of_week: dailyPurgeEnabled ? dailyPurgeDay : null,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
@@ -235,7 +253,11 @@ function GameSettingsPage() {
 
       {/* Round settings */}
       <Section icon={<Timer className="h-4 w-4" />} title="Round settings" subtitle="Rules for how eliminations and rounds flow.">
-        <SliderRow label="Total rounds" value={totalRounds} min={1} max={20} onChange={setTotalRounds} suffix="rounds" />
+        <Toggle label="Unlimited rounds" hint="Game keeps going until you end it manually." checked={unlimitedRounds} onChange={setUnlimitedRounds} />
+        {!unlimitedRounds && (
+          <SliderRow className="mt-3" label="Total rounds" value={totalRounds} min={1} max={20} onChange={setTotalRounds} suffix="rounds" />
+        )}
+        <SliderRow className="mt-3" label="Round length" value={roundLengthDays} min={1} max={14} onChange={setRoundLengthDays} suffix={roundLengthDays === 1 ? "day" : "days"} />
         <p className="text-[11px] text-muted-foreground mt-1">Currently on round {game.current_round || 0}.</p>
 
         <div className="mt-4 space-y-2">
@@ -255,33 +277,68 @@ function GameSettingsPage() {
         <Toggle label="Enable purge" hint="Turn purges on for this game." checked={purgeEnabled} onChange={setPurgeEnabled} />
 
         <div className={`mt-3 ${purgeEnabled ? "" : "opacity-50 pointer-events-none"}`}>
-          <SliderRow label="Purge every" value={purgeMinutes} min={5} max={240} step={5} onChange={setPurgeMinutes} suffix="min" />
+          <SliderRow label="Purge length" value={purgeLengthMinutes} min={5} max={240} step={5} onChange={setPurgeLengthMinutes} suffix="min" />
 
           <div className="mt-4 space-y-2">
             <Toggle
               label="Random purge"
-              hint="A purge can also kick off at a random time during a round."
+              hint="A purge kicks off at a random time."
               checked={randomPurge}
               onChange={setRandomPurge}
             />
+            {randomPurge && (
+              <div className="bg-card border border-border rounded-xl px-3 py-3">
+                <p className="text-sm font-semibold mb-2">Random purge happens</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["daily", "weekly"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setRandomPurgeFrequency(f)}
+                      className={`rounded-lg py-2 text-sm font-semibold capitalize border ${randomPurgeFrequency === f ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground"}`}
+                    >
+                      Once a {f === "daily" ? "day" : "week"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <Toggle
-              label="Daily purge"
-              hint="A purge happens every day at the same time."
+              label="Scheduled purge"
+              hint="A purge happens on a specific day and time each week."
               checked={dailyPurgeEnabled}
               onChange={setDailyPurgeEnabled}
             />
             {dailyPurgeEnabled && (
-              <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3">
-                <span className="text-sm font-semibold">Daily purge time</span>
-                <input
-                  type="time"
-                  value={dailyPurgeTime}
-                  onChange={(e) => setDailyPurgeTime(e.target.value)}
-                  className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
-                />
-              </label>
+              <div className="bg-card border border-border rounded-xl px-3 py-3 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold mb-2">Day</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {DAYS.map((d, i) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDailyPurgeDay(i)}
+                        className={`rounded-lg py-1.5 text-[11px] font-bold border ${dailyPurgeDay === i ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground"}`}
+                      >
+                        {d.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold">Time</span>
+                  <input
+                    type="time"
+                    value={dailyPurgeTime}
+                    onChange={(e) => setDailyPurgeTime(e.target.value)}
+                    className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
+                  />
+                </label>
+              </div>
             )}
           </div>
+
         </div>
       </Section>
     </div>
