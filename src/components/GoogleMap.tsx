@@ -89,7 +89,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
           zoomControl: false,
           clickableIcons: false,
           gestureHandling: "greedy",
-          backgroundColor: "#e5e3df",
+          backgroundColor: "var(--map-fallback)",
         });
         // Trigger a resize once the container has its final size — fixes blank tiles
         // when the map is initialized inside a freshly-mounted flex/absolute parent.
@@ -143,13 +143,16 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
   }, [markers]);
 
   return (
-    <div className={`relative ${className}`}>
-      <div ref={ref} className="absolute inset-0" />
-      {err && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/40 text-center p-4">
-          <p className="text-xs text-muted-foreground">Map unavailable: {err}</p>
-        </div>
-      )}
+    <div className={`h-full w-full overflow-hidden ${className}`}>
+      <div className="relative h-full w-full">
+        <div className="absolute inset-0 bg-map-fallback" />
+        <div ref={ref} className="absolute inset-0 h-full w-full" />
+        {err && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/40 text-center p-4">
+            <p className="text-xs text-muted-foreground">Map unavailable: {err}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
