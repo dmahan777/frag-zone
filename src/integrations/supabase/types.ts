@@ -136,6 +136,7 @@ export type Database = {
           code: string
           created_at: string
           current_round: number
+          daily_purge_day_of_week: number | null
           daily_purge_enabled: boolean
           daily_purge_time: string | null
           elimination_approval: boolean
@@ -149,19 +150,23 @@ export type Database = {
           open_registration: boolean
           players_per_team: number
           purge_enabled: boolean
-          purge_interval_minutes: number
+          purge_length_minutes: number
           random_purge: boolean
+          random_purge_frequency: string
           revive_enabled: boolean
           round_ends_at: string | null
+          round_length_days: number
           rules: string
           safe_zones: Json
           status: string
           total_rounds: number
+          unlimited_rounds: boolean
         }
         Insert: {
           code: string
           created_at?: string
           current_round?: number
+          daily_purge_day_of_week?: number | null
           daily_purge_enabled?: boolean
           daily_purge_time?: string | null
           elimination_approval?: boolean
@@ -175,19 +180,23 @@ export type Database = {
           open_registration?: boolean
           players_per_team?: number
           purge_enabled?: boolean
-          purge_interval_minutes?: number
+          purge_length_minutes?: number
           random_purge?: boolean
+          random_purge_frequency?: string
           revive_enabled?: boolean
           round_ends_at?: string | null
+          round_length_days?: number
           rules?: string
           safe_zones?: Json
           status?: string
           total_rounds?: number
+          unlimited_rounds?: boolean
         }
         Update: {
           code?: string
           created_at?: string
           current_round?: number
+          daily_purge_day_of_week?: number | null
           daily_purge_enabled?: boolean
           daily_purge_time?: string | null
           elimination_approval?: boolean
@@ -201,14 +210,17 @@ export type Database = {
           open_registration?: boolean
           players_per_team?: number
           purge_enabled?: boolean
-          purge_interval_minutes?: number
+          purge_length_minutes?: number
           random_purge?: boolean
+          random_purge_frequency?: string
           revive_enabled?: boolean
           round_ends_at?: string | null
+          round_length_days?: number
           rules?: string
           safe_zones?: Json
           status?: string
           total_rounds?: number
+          unlimited_rounds?: boolean
         }
         Relationships: []
       }
