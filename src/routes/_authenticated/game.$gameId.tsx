@@ -61,12 +61,21 @@ function GameScreen() {
   }, [gameId]);
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported on this device");
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 5_000 }
+      (err) => toast.error(`Location error: ${err.message}`),
+      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 10_000 }
     );
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 15_000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
   const targets = useMemo(() => {
