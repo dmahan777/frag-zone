@@ -69,6 +69,11 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [game?.id]);
 
+  // If user has an active game, the home screen IS the game screen
+  if (game) {
+    return <Navigate to="/game/$gameId" params={{ gameId: game.id }} replace />;
+  }
+
   return (
     <div>
       {/* Header */}
