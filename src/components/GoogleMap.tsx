@@ -143,14 +143,16 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
   }, [markers]);
 
   return (
-    <div className={`relative h-full w-full overflow-hidden ${className}`}>
-      <div className="absolute inset-0 bg-map-fallback" />
-      <div ref={ref} className="absolute inset-0 h-full w-full" />
-      {err && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted/40 text-center p-4">
-          <p className="text-xs text-muted-foreground">Map unavailable: {err}</p>
-        </div>
-      )}
+    <div className={`h-full w-full overflow-hidden ${className}`}>
+      <div className="relative h-full w-full">
+        <div className="absolute inset-0 bg-map-fallback" />
+        <div ref={ref} className="absolute inset-0 h-full w-full" />
+        {err && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted/40 text-center p-4">
+            <p className="text-xs text-muted-foreground">Map unavailable: {err}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
