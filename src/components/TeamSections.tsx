@@ -7,10 +7,9 @@ export type TeamRow = { id: string; name: string; color: string; created_by: str
 export type PlayerLite = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 export type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
 
-export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[] }) {
+export function TeamCreator({ gameId, meId, myPlayerId, teams, playersPerTeam }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; playersPerTeam: number }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#3b82f6");
-  const [maxMembers, setMaxMembers] = useState(4);
   const [busy, setBusy] = useState(false);
 
   void teams;
@@ -43,7 +42,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
     }
 
     const { data, error } = await supabase.from("teams").insert({
-      game_id: gameId, name: name.trim(), color, created_by: meId, max_members: maxMembers,
+      game_id: gameId, name: name.trim(), color, created_by: meId, max_members: playersPerTeam,
     }).select().single();
     if (error) { setBusy(false); toast.error(error.message); return; }
     const created = data as TeamRow;
@@ -76,18 +75,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Max members</p>
-          <span className="text-sm font-bold tabular-nums">{maxMembers}</span>
-        </div>
-        <input
-          type="range" min={2} max={20} step={1}
-          value={maxMembers}
-          onChange={(e) => setMaxMembers(parseInt(e.target.value))}
-          className="w-full mt-1 accent-primary"
-        />
-      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">Max team size is set by the host in game settings ({playersPerTeam} {playersPerTeam === 1 ? "player" : "players"}).</p>
 
       <button
         disabled={busy || !name.trim()}
@@ -100,7 +88,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
   );
 }
 
-export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, players, profilesById }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; players: PlayerLite[]; profilesById: Record<string, ProfileLite> }) {
+export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, players, profilesById, playersPerTeam }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; players: PlayerLite[]; profilesById: Record<string, ProfileLite>; playersPerTeam: number }) {
   const [points, setPoints] = useState(0);
   const myTeam = useMemo(() => teams.find((t) => t.id === myTeamId) ?? null, [teams, myTeamId]);
   const members = useMemo(() => players.filter((p) => p.team_id === myTeamId), [players, myTeamId]);
@@ -138,7 +126,7 @@ export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, playe
   if (!myTeam) {
     return (
       <div className="space-y-4">
-        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} playersPerTeam={playersPerTeam} />
         {teams.length > 0 && (
           <div>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Or join an existing team</p>

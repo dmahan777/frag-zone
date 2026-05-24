@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/game/$gameId")({
 type Tab = "Activity" | "Players" | "Team" | "Powerups" | "Admin";
 const TABS: Tab[] = ["Activity", "Players", "Team", "Powerups", "Admin"];
 
-type GameRow = { id: string; name: string; code: string; status: string; host_id: string; current_round: number; total_rounds: number; round_ends_at: string | null };
+type GameRow = { id: string; name: string; code: string; status: string; host_id: string; current_round: number; total_rounds: number; round_ends_at: string | null; players_per_team: number };
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
 type TeamRow = { id: string; name: string; color: string; created_by: string; max_members: number };
@@ -311,10 +311,10 @@ function GameScreen() {
             <ActivitySection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
           {tab === "Players" && (
-            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} teams={teams} gameId={gameId} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
+            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} teams={teams} gameId={gameId} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} playersPerTeam={game?.players_per_team ?? 4} />
           )}
           {tab === "Team" && (
-            <MyTeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} teams={teams} players={players} profilesById={profilesById} />
+            <MyTeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} teams={teams} players={players} profilesById={profilesById} playersPerTeam={game?.players_per_team ?? 4} />
           )}
           {tab === "Powerups" && (
             <EmptyHint title="No powerups" body="Power-ups and gear will show up here." />
@@ -468,7 +468,7 @@ function PlayerRowCard({ player, profile, accent, badge }: { player: PlayerRow; 
   );
 }
 
-function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId, myPlayerId, myTeamId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null; teams: TeamRow[]; gameId: string; myPlayerId: string | null; myTeamId: string | null }) {
+function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId, myPlayerId, myTeamId, playersPerTeam }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null; teams: TeamRow[]; gameId: string; myPlayerId: string | null; myTeamId: string | null; playersPerTeam: number }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<PlayerFilter>("All");
 
@@ -543,7 +543,7 @@ function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId
 
       {/* Create-a-team form */}
       <div className="mt-5">
-        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} playersPerTeam={playersPerTeam} />
       </div>
 
       {/* Groups */}
