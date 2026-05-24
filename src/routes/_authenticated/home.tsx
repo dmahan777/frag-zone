@@ -100,7 +100,7 @@ function HomePage() {
                 <Stat icon={<Clock className="h-3.5 w-3.5" />} label="Ends in" value={formatCountdown(game.round_ends_at)} />
               </div>
               {game.host_id === user?.id && (
-                <button onClick={() => navigate({ to: "/admin/$gameId" as any, params: { gameId: game.id } as any })}
+                <button onClick={() => navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}
                   className="mt-4 w-full bg-card/60 border border-primary/30 text-primary rounded-xl py-2.5 text-sm font-semibold">
                   Open admin panel
                 </button>
