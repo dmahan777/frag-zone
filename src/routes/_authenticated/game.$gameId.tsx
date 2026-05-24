@@ -545,7 +545,10 @@ function PlayerLocationCard({
     return () => { cancelled = true; };
   }, [lat, lng]);
 
-  const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const isApple = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+  const directionsHref = isApple
+    ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`
+    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
   const ageLabel = ageSec < 60 ? "just now" : ageSec < 3600 ? `${Math.round(ageSec / 60)}m ago` : `${Math.round(ageSec / 3600)}h ago`;
 
   return (
