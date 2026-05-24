@@ -110,6 +110,13 @@ function GameScreen() {
   }, [me, players]);
 
   const center = myPos ?? (user && locations[user.id]) ?? { lat: 25.768, lng: -80.135 };
+  const teamColorById = useMemo(() => {
+    const m: Record<string, string> = {};
+    teams.forEach((t) => { m[t.id] = t.color; });
+    return m;
+  }, [teams]);
+  const myTeamColor = me?.team_id ? teamColorById[me.team_id] : undefined;
+
   const markers = useMemo(() => {
     const out: { id: string; lat: number; lng: number; label?: string; photoUrl?: string | null; ringColor?: string }[] = [];
     const seen = new Set<string>();
@@ -119,6 +126,7 @@ function GameScreen() {
       const prof = profilesById[pl.user_id];
       const isMe = pl.user_id === user?.id;
       const isTarget = targets.some((t) => t.user_id === pl.user_id);
+      const teamColor = pl.team_id ? teamColorById[pl.team_id] : undefined;
       seen.add(pl.user_id);
       out.push({
         id: pl.id,
@@ -126,7 +134,7 @@ function GameScreen() {
         lng: loc.lng,
         label: isMe ? `${prof?.username ?? "You"} (you)` : prof?.username ?? "Player",
         photoUrl: (isMe ? profile?.photo_url : null) ?? prof?.photo_url ?? null,
-        ringColor: isMe ? "#ffffff" : isTarget ? "#ef4444" : "#3b82f6",
+        ringColor: teamColor ?? (isMe ? "#ffffff" : isTarget ? "#ef4444" : "#3b82f6"),
       });
     });
     // Always include me on the map when I have a position, even if my players row hasn't loaded yet
@@ -137,11 +145,11 @@ function GameScreen() {
         lng: myPos.lng,
         label: `${profile?.username ?? "You"} (you)`,
         photoUrl: profile?.photo_url ?? null,
-        ringColor: "#ffffff",
+        ringColor: myTeamColor ?? "#ffffff",
       });
     }
     return out;
-  }, [myPos, user, profile, locations, players, profilesById, targets]);
+  }, [myPos, user, profile, locations, players, profilesById, targets, teamColorById, myTeamColor]);
 
   const isHost = game?.host_id === user?.id;
 
