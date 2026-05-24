@@ -266,12 +266,6 @@ function GameScreen() {
                 <Share2 className="h-3.5 w-3.5" />
               </button>
             } />
-            <Divider />
-            <StatCell label="Team" value="" trailing={
-              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
-                <UsersIcon className="h-4 w-4 text-foreground/70" />
-              </div>
-            } />
           </div>
         </div>
 
@@ -377,7 +371,7 @@ function ActivitySection({ players, profilesById, meId, meTargetId }: { players:
         ))}
       </Section>
 
-      <Section title="Bounties" subtitle="Players hunting you." emptyText="No one is hunting you. Yet.">
+      <Section title="Bounties" subtitle="Open targets — anyone can eliminate them for a reward." emptyText="No active bounties right now.">
         {bounties.map((b) => (
           <PlayerRowCard key={b.id} player={b} profile={profilesById[b.user_id]} accent="#f59e0b" badge="BOUNTY" />
         ))}
@@ -559,8 +553,9 @@ function PlayerLocationCard({
           <div className="flex items-center gap-2">
             <p className="font-display font-bold truncate">{name}{isMe ? " (you)" : ""}</p>
             <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${isLive ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-              {isLive ? "● Live" : "Offline"}
+              {isLive ? "● Live" : `Updated ${ageLabel}`}
             </span>
+
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Team: <span className="text-foreground/80">{team ?? "—"}</span> · updated {ageLabel}
