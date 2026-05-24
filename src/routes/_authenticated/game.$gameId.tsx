@@ -266,12 +266,6 @@ function GameScreen() {
                 <Share2 className="h-3.5 w-3.5" />
               </button>
             } />
-            <Divider />
-            <StatCell label="Team" value="" trailing={
-              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
-                <UsersIcon className="h-4 w-4 text-foreground/70" />
-              </div>
-            } />
           </div>
         </div>
 
