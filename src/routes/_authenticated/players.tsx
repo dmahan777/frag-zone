@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Users, Shield, Search, Crosshair } from "lucide-react";
+import { Search, Crosshair } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/players")({
   component: PlayersPage,
@@ -24,7 +24,6 @@ type Row = {
 };
 
 function PlayersPage() {
-  const [tab, setTab] = useState<"players" | "teams">("players");
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -66,15 +65,6 @@ function PlayersPage() {
     );
   }, [rows, q]);
 
-  const teams = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const r of filtered) {
-      if (!r.team_id) continue;
-      if (!map.has(r.team_id)) map.set(r.team_id, []);
-      map.get(r.team_id)!.push(r);
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
-  }, [filtered]);
 
   return (
     <div className="px-5 pt-12 pb-4">
@@ -92,15 +82,9 @@ function PlayersPage() {
         />
       </div>
 
-      {/* Tabs */}
-      <div className="mt-5 bg-card border border-border rounded-full p-1 flex">
-        <TabBtn active={tab === "players"} onClick={() => setTab("players")} icon={<Users className="h-4 w-4" />} label={`Players · ${rows.length}`} />
-        <TabBtn active={tab === "teams"} onClick={() => setTab("teams")} icon={<Shield className="h-4 w-4" />} label={`Teams · ${teams.length}`} />
-      </div>
-
       {loading && <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
-      {!loading && tab === "players" && (
+      {!loading && (
         <div className="mt-5 space-y-2">
           {filtered.length === 0 && <Empty text="No players yet." />}
           {filtered.map((r, i) => (
@@ -108,43 +92,10 @@ function PlayersPage() {
           ))}
         </div>
       )}
-
-      {!loading && tab === "teams" && (
-        <div className="mt-5 space-y-4">
-          {teams.length === 0 && <Empty text="No teams formed yet." />}
-          {teams.map(([teamId, members]) => (
-            <div key={teamId} className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-                <Shield className="h-4 w-4 text-secondary" />
-                <span className="font-display font-bold tracking-tight">{teamId}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{members.length} members</span>
-              </div>
-              <div className="divide-y divide-border">
-                {members.map((m) => (
-                  <PlayerRow key={m.id} row={m} compact />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
 
-function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-bold transition ${
-        active ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground" : "text-muted-foreground"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 function PlayerRow({ row, rank, compact }: { row: Row; rank?: number; compact?: boolean }) {
   const name = row.profile?.username ?? row.profile?.display_name ?? "operator";
