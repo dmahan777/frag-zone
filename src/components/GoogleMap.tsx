@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
+
+const PIN_W = 76;
+const PIN_H = 92;
+const RADIUS = 32;
+const CENTER = 38;
 
 type MapMarker = {
   id: string;
@@ -64,21 +70,38 @@ async function toDataUrl(url: string): Promise<string> {
 
 function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
   const img = photoDataUrl
-    ? `<image href="${photoDataUrl}" x="6" y="6" width="44" height="44" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">?</text>`;
+    ? `<image href="${photoDataUrl}" x="${CENTER - RADIUS + 6}" y="${CENTER - RADIUS + 6}" width="${(RADIUS - 6) * 2}" height="${(RADIUS - 6) * 2}" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS - 6}" fill="#1f2937"/><text x="${CENTER}" y="${CENTER + 8}" font-size="24" text-anchor="middle" fill="#fff" font-family="sans-serif">?</text>`;
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="68" viewBox="0 0 56 68">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${PIN_W}" height="${PIN_H}" viewBox="0 0 ${PIN_W} ${PIN_H}">
       <defs>
-        <clipPath id="avatarClip"><circle cx="28" cy="28" r="22"/></clipPath>
+        <clipPath id="avatarClip"><circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS - 6}"/></clipPath>
         <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.3"/>
         </filter>
       </defs>
       <g filter="url(#s)">
-        <path d="M28 64 L20 52 H36 Z" fill="#ffffff"/>
-        <circle cx="28" cy="28" r="26" fill="#ffffff"/>
-        <circle cx="28" cy="28" r="24" fill="${ringColor}"/>
+        <path d="M${CENTER} ${PIN_H - 4} L${CENTER - 10} ${PIN_H - 18} H${CENTER + 10} Z" fill="${ringColor}"/>
+        <circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS}" fill="#ffffff"/>
+        <circle cx="${CENTER}" cy="${CENTER}" r="${RADIUS - 3}" fill="${ringColor}"/>
         ${img}
+      </g>
+    </svg>`;
+  return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+}
+
+function clusterIcon(count: number) {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+      <defs>
+        <filter id="cs" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <g filter="url(#cs)">
+        <circle cx="32" cy="32" r="28" fill="#ffffff" opacity="0.4"/>
+        <circle cx="32" cy="32" r="22" fill="#3b82f6"/>
+        <text x="32" y="38" font-size="18" font-weight="700" text-anchor="middle" fill="#fff" font-family="sans-serif">${count}</text>
       </g>
     </svg>`;
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
@@ -88,6 +111,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerObjs = useRef<any[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const fallbackCenter = center ?? { lat: 25.768, lng: -80.135 }; // South Beach default
@@ -137,16 +161,16 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
     if (!mapRef.current || !google?.maps) return;
     let cancelled = false;
 
+    clustererRef.current?.clearMarkers();
     markerObjs.current.forEach((m) => m.setMap(null));
     markerObjs.current = markers.map((m) => {
       const initialDataUrl = m.photoUrl ? photoCache.get(m.photoUrl) ?? null : null;
       const marker = new google.maps.Marker({
         position: { lat: m.lat, lng: m.lng },
-        map: mapRef.current,
         icon: {
           url: svgPin(initialDataUrl, m.ringColor || "#3b82f6"),
-          scaledSize: new google.maps.Size(56, 68),
-          anchor: new google.maps.Point(28, 64),
+          scaledSize: new google.maps.Size(PIN_W, PIN_H),
+          anchor: new google.maps.Point(PIN_W / 2, PIN_H - 4),
         },
         title: m.label,
       });
@@ -156,12 +180,31 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
           if (cancelled) return;
           marker.setIcon({
             url: svgPin(dataUrl, m.ringColor || "#3b82f6"),
-            scaledSize: new google.maps.Size(56, 68),
-            anchor: new google.maps.Point(28, 64),
+            scaledSize: new google.maps.Size(PIN_W, PIN_H),
+            anchor: new google.maps.Point(PIN_W / 2, PIN_H - 4),
           });
         }).catch(() => {});
       }
       return marker;
+    });
+
+    clustererRef.current = new MarkerClusterer({
+      map: mapRef.current,
+      markers: markerObjs.current,
+      algorithm: new SuperClusterAlgorithm({ radius: 60, maxZoom: 18 }),
+      renderer: {
+        render: ({ count, position }) => {
+          return new google.maps.Marker({
+            position,
+            icon: {
+              url: clusterIcon(count),
+              scaledSize: new google.maps.Size(64, 64),
+              anchor: new google.maps.Point(32, 32),
+            },
+            zIndex: 1000 + count,
+          });
+        },
+      },
     });
 
     if (focusId) {
