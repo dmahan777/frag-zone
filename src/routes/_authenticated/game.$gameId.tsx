@@ -362,7 +362,7 @@ function PlayerRowCard({ player, profile, accent, badge }: { player: PlayerRow; 
   return (
     <div className="bg-card border border-border rounded-2xl p-3 flex items-center gap-3">
       <div className="relative">
-        <Avatar src={profile?.photo_url ?? undefined} alt={profile?.username ?? "Player"} size={44} />
+        <Avatar url={profile?.photo_url} name={profile?.username} size={44} />
         <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card" style={{ background: accent }} />
       </div>
       <div className="flex-1 min-w-0">
