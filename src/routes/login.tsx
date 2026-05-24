@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileShell } from "@/components/MobileShell";
 import { supabase } from "@/integrations/supabase/client";
-import { Crosshair, Mail, Lock } from "lucide-react";
+import { requestLocationOnce } from "@/lib/location";
+import { Crosshair, Mail, Lock, MapPin, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -17,6 +18,8 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowLocation, setAllowLocation] = useState(true);
+  const [allowNotifications, setAllowNotifications] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -28,6 +31,21 @@ function Login() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        // Location sharing is REQUIRED to create an account
+        if (!allowLocation) {
+          toast.error("Location sharing is required to play. Toggle it on to continue.");
+          return;
+        }
+        try {
+          await requestLocationOnce();
+        } catch (err) {
+          toast.error((err as Error).message);
+          return;
+        }
+        // Notifications are optional
+        if (allowNotifications && typeof Notification !== "undefined" && Notification.permission === "default") {
+          try { await Notification.requestPermission(); } catch {}
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -134,6 +152,27 @@ function Login() {
               </div>
             </div>
 
+            {!isSignin ? null : (
+              <div className="space-y-2 pt-2">
+                <PermissionToggle
+                  icon={<MapPin className="h-4 w-4" />}
+                  title="Share location"
+                  subtitle="Required — used so other players can find you on the map."
+                  required
+                  checked={allowLocation}
+                  onChange={setAllowLocation}
+                />
+                <PermissionToggle
+                  icon={<Bell className="h-4 w-4" />}
+                  title="Push notifications"
+                  subtitle="Optional — alerts for targets, eliminations, and game updates."
+                  checked={allowNotifications}
+                  onChange={setAllowNotifications}
+                />
+              </div>
+            )}
+
+
             <button
               type="submit"
               disabled={loading}
@@ -173,5 +212,38 @@ function Login() {
         </div>
       </div>
     </MobileShell>
+  );
+}
+
+function PermissionToggle({
+  icon, title, subtitle, checked, onChange, required,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  required?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center gap-3 bg-card/40 border border-border rounded-2xl p-3 text-left active:scale-[0.99] transition"
+    >
+      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${checked ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold">{title}</p>
+          {required && <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-destructive/20 text-destructive">REQUIRED</span>}
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+      </div>
+      <div className={`h-6 w-10 rounded-full p-0.5 transition ${checked ? "bg-primary" : "bg-muted"}`}>
+        <div className={`h-5 w-5 rounded-full bg-background transition-transform ${checked ? "translate-x-4" : ""}`} />
+      </div>
+    </button>
   );
 }
