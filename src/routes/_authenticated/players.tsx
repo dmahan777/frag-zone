@@ -68,7 +68,12 @@ function PlayersPage() {
 
   return (
     <div className="px-5 pt-12 pb-4">
-      <h1 className="font-display text-3xl font-extrabold">Players</h1>
+      <h1 className="font-display text-3xl font-extrabold flex items-center gap-2">
+        Players
+        <span className="text-base font-bold text-primary bg-primary/10 border border-primary/30 rounded-full px-2.5 py-0.5">
+          {rows.filter((r) => r.status === "active").length}
+        </span>
+      </h1>
       <p className="text-sm text-muted-foreground mt-1">Everyone in the arena.</p>
 
       {/* Search */}
