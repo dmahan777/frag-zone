@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,6 +69,11 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [game?.id]);
 
+  // If user has an active game, the home screen IS the game screen
+  if (game) {
+    return <Navigate to="/game/$gameId" params={{ gameId: game.id }} replace />;
+  }
+
   return (
     <div>
       {/* Header */}
@@ -83,64 +88,10 @@ function HomePage() {
         {activePlayer && <StatusBadge status={activePlayer.status} />}
       </div>
 
-      {/* Hero game card or empty state */}
+      {/* Empty state — user has no active game */}
       <div className="px-5">
-        {game ? (
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card to-secondary/10 border border-border p-5 animate-float-in">
-            <div className="absolute -top-8 -right-8 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-widest text-primary font-bold">{game.status === "active" ? "● LIVE" : game.status.toUpperCase()}</span>
-                <span className="text-[10px] text-muted-foreground font-mono">#{game.code}</span>
-              </div>
-              <h2 className="mt-2 font-display text-2xl font-extrabold">{game.name}</h2>
-              <div className="mt-4 grid grid-cols-3 gap-3">
-                <Stat icon={<Users className="h-3.5 w-3.5" />} label="Alive" value={aliveCount.toString()} />
-                <Stat icon={<Crosshair className="h-3.5 w-3.5" />} label="Round" value={`${game.current_round}/${game.total_rounds}`} />
-                <Stat icon={<Clock className="h-3.5 w-3.5" />} label="Ends in" value={formatCountdown(game.round_ends_at)} />
-              </div>
-              <button onClick={() => navigate({ to: "/game/$gameId", params: { gameId: game.id } })}
-                className="mt-4 w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-display font-bold py-3 rounded-xl shadow-glow-primary active:scale-[0.98] transition">
-                Enter game
-              </button>
-              {game.host_id === user?.id && (
-                <button onClick={() => navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}
-                  className="mt-2 w-full bg-card/60 border border-primary/30 text-primary rounded-xl py-2.5 text-sm font-semibold">
-                  Open admin panel
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <EmptyGameState onOpen={() => setShowJoinCreate(true)} />
-        )}
+        <EmptyGameState onOpen={() => setShowJoinCreate(true)} />
       </div>
-
-      {/* Target preview */}
-      {activePlayer?.status === "active" && targetProfile && (
-        <div className="px-5 mt-5">
-          <Link to="/target" className="flex items-center gap-3 bg-card border border-border rounded-2xl p-3 active:scale-[0.99] transition">
-            <Avatar name={targetProfile.username} url={targetProfile.photo_url} size={48} ring="danger" />
-            <div className="flex-1">
-              <p className="text-[10px] uppercase tracking-widest text-danger font-bold">Your target</p>
-              <p className="font-display font-bold">@{targetProfile.username}</p>
-              {targetProfile.school && <p className="text-xs text-muted-foreground">{targetProfile.school}</p>}
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </Link>
-        </div>
-      )}
-
-      {/* Event feed */}
-      {game && (
-        <div className="px-5 mt-6">
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3 font-bold">Live feed</h3>
-          <div className="space-y-2">
-            {events.length === 0 && <p className="text-sm text-muted-foreground italic">No events yet. Things are quiet... too quiet.</p>}
-            {events.map((e) => <EventItem key={e.id} ev={e} />)}
-          </div>
-        </div>
-      )}
 
       {showJoinCreate && <JoinCreateModal onClose={() => setShowJoinCreate(false)} onJoined={() => { setShowJoinCreate(false); load(); }} />}
     </div>
