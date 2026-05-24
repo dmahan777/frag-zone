@@ -214,3 +214,36 @@ function Login() {
     </MobileShell>
   );
 }
+
+function PermissionToggle({
+  icon, title, subtitle, checked, onChange, required,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  required?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center gap-3 bg-card/40 border border-border rounded-2xl p-3 text-left active:scale-[0.99] transition"
+    >
+      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${checked ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold">{title}</p>
+          {required && <span className="text-[9px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-destructive/20 text-destructive">REQUIRED</span>}
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+      </div>
+      <div className={`h-6 w-10 rounded-full p-0.5 transition ${checked ? "bg-primary" : "bg-muted"}`}>
+        <div className={`h-5 w-5 rounded-full bg-background transition-transform ${checked ? "translate-x-4" : ""}`} />
+      </div>
+    </button>
+  );
+}
