@@ -161,16 +161,16 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
     if (!mapRef.current || !google?.maps) return;
     let cancelled = false;
 
+    clustererRef.current?.clearMarkers();
     markerObjs.current.forEach((m) => m.setMap(null));
     markerObjs.current = markers.map((m) => {
       const initialDataUrl = m.photoUrl ? photoCache.get(m.photoUrl) ?? null : null;
       const marker = new google.maps.Marker({
         position: { lat: m.lat, lng: m.lng },
-        map: mapRef.current,
         icon: {
           url: svgPin(initialDataUrl, m.ringColor || "#3b82f6"),
-          scaledSize: new google.maps.Size(56, 68),
-          anchor: new google.maps.Point(28, 64),
+          scaledSize: new google.maps.Size(PIN_W, PIN_H),
+          anchor: new google.maps.Point(PIN_W / 2, PIN_H - 4),
         },
         title: m.label,
       });
@@ -180,12 +180,31 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
           if (cancelled) return;
           marker.setIcon({
             url: svgPin(dataUrl, m.ringColor || "#3b82f6"),
-            scaledSize: new google.maps.Size(56, 68),
-            anchor: new google.maps.Point(28, 64),
+            scaledSize: new google.maps.Size(PIN_W, PIN_H),
+            anchor: new google.maps.Point(PIN_W / 2, PIN_H - 4),
           });
         }).catch(() => {});
       }
       return marker;
+    });
+
+    clustererRef.current = new MarkerClusterer({
+      map: mapRef.current,
+      markers: markerObjs.current,
+      algorithm: new SuperClusterAlgorithm({ radius: 60, maxZoom: 18 }),
+      renderer: {
+        render: ({ count, position }) => {
+          return new google.maps.Marker({
+            position,
+            icon: {
+              url: clusterIcon(count),
+              scaledSize: new google.maps.Size(64, 64),
+              anchor: new google.maps.Point(32, 32),
+            },
+            zIndex: 1000 + count,
+          });
+        },
+      },
     });
 
     if (focusId) {
