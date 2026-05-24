@@ -75,18 +75,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams, playersPerTeam }:
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Max members</p>
-          <span className="text-sm font-bold tabular-nums">{maxMembers}</span>
-        </div>
-        <input
-          type="range" min={2} max={20} step={1}
-          value={maxMembers}
-          onChange={(e) => setMaxMembers(parseInt(e.target.value))}
-          className="w-full mt-1 accent-primary"
-        />
-      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">Max team size is set by the host in game settings ({playersPerTeam} {playersPerTeam === 1 ? "player" : "players"}).</p>
 
       <button
         disabled={busy || !name.trim()}
