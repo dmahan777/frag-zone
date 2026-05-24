@@ -172,7 +172,7 @@ function GameScreen() {
             <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="danger" />
           </Link>
           {TABS.map((t) => {
-            const active = t === tab;
+            const active = t === tab && t !== "Activity";
             const visible = t !== "Admin" || isHost;
             if (!visible) return null;
             return (
