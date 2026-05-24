@@ -588,3 +588,105 @@ function PlayerLocationCard({
     </div>
   );
 }
+
+type TeamRow = { id: string; name: string; color: string; created_by: string };
+
+const TEAM_COLORS = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
+function TeamSection({ gameId, meId, myPlayerId, myTeamId }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null }) {
+  const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [name, setName] = useState("");
+  const [color, setColor] = useState(TEAM_COLORS[3]);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("teams").select("id, name, color, created_by").eq("game_id", gameId).order("created_at");
+    setTeams((data as TeamRow[]) ?? []);
+  };
+  useEffect(() => { load(); }, [gameId]);
+
+  const create = async () => {
+    if (!meId || !name.trim()) return;
+    setBusy(true);
+    const { data, error } = await supabase.from("teams").insert({ game_id: gameId, name: name.trim(), color, created_by: meId }).select().single();
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setName("");
+    setTeams((t) => [...t, data as TeamRow]);
+    if (myPlayerId) await supabase.from("players").update({ team_id: (data as TeamRow).id }).eq("id", myPlayerId);
+    toast.success(`Created team ${(data as TeamRow).name}`);
+  };
+
+  const join = async (teamId: string) => {
+    if (!myPlayerId) return;
+    const { error } = await supabase.from("players").update({ team_id: teamId }).eq("id", myPlayerId);
+    if (error) toast.error(error.message); else toast.success("Joined team");
+  };
+
+  const leave = async () => {
+    if (!myPlayerId) return;
+    const { error } = await supabase.from("players").update({ team_id: null }).eq("id", myPlayerId);
+    if (error) toast.error(error.message); else toast.success("Left team");
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="bg-surface border border-border rounded-2xl p-4">
+        <h3 className="font-display font-extrabold text-base mb-3">Create a team</h3>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Team name"
+          maxLength={40}
+          className="w-full bg-card border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary"
+        />
+        <div className="mt-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Team color</p>
+          <div className="flex flex-wrap gap-2">
+            {TEAM_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setColor(c)}
+                aria-label={`color ${c}`}
+                className={`h-8 w-8 rounded-full border-2 transition ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
+                style={{ background: c }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          disabled={busy || !name.trim()}
+          onClick={create}
+          className="mt-4 w-full bg-primary text-primary-foreground font-display font-bold py-2.5 rounded-xl disabled:opacity-50 active:scale-[0.98] transition"
+        >
+          {busy ? "Creating…" : "Create team"}
+        </button>
+      </div>
+
+      <div>
+        <h3 className="font-display font-extrabold text-base mb-3">Teams in this game</h3>
+        {teams.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No teams yet. Be the first to create one.</p>
+        ) : (
+          <ul className="space-y-2">
+            {teams.map((t) => {
+              const mine = t.id === myTeamId;
+              return (
+                <li key={t.id} className="flex items-center gap-3 bg-surface border border-border rounded-xl p-3">
+                  <span className="h-6 w-6 rounded-full shrink-0 border border-border" style={{ background: t.color }} />
+                  <span className="font-semibold text-sm flex-1 truncate">{t.name}</span>
+                  {mine ? (
+                    <button onClick={leave} className="text-xs font-bold px-3 py-1.5 rounded-full bg-muted text-foreground/80">Leave</button>
+                  ) : (
+                    <button onClick={() => join(t.id)} className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground">Join</button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
