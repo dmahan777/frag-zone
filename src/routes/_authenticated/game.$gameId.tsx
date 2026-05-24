@@ -6,6 +6,7 @@ import { GoogleMap } from "@/components/GoogleMap";
 import { Avatar } from "@/components/Avatar";
 import { Bell, Settings, Users as UsersIcon, Share2, Shield, Search, ChevronLeft } from "lucide-react";
 import { formatCountdown } from "@/lib/game-utils";
+import { useLiveLocation } from "@/hooks/use-live-location";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
