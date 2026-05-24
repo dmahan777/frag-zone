@@ -188,6 +188,36 @@ function GameScreen() {
             {me?.kills ?? 0} pts
           </div>
         </div>
+
+        {focusId && (() => {
+          const marker = markers.find((m) => m.id === focusId);
+          if (!marker) return null;
+          const pl = players.find((p) => p.id === focusId) ?? (focusId.startsWith("me-") ? me : null);
+          const uid = pl?.user_id ?? user?.id;
+          const prof = uid ? profilesById[uid] : undefined;
+          const isMe = uid === user?.id;
+          const loc = isMe && myPos
+            ? { lat: myPos.lat, lng: myPos.lng, speed: myPos.speed, battery: myPos.battery, updated_at: new Date().toISOString() }
+            : (uid ? locations[uid] : undefined);
+          if (!loc) return null;
+          const ageSec = loc.updated_at ? (Date.now() - new Date(loc.updated_at).getTime()) / 1000 : Infinity;
+          const isLive = ageSec < 60;
+          return (
+            <PlayerLocationCard
+              name={prof?.username ?? (isMe ? "You" : "Player")}
+              isMe={isMe}
+              team={pl?.team_id ?? null}
+              photoUrl={prof?.photo_url ?? null}
+              lat={loc.lat}
+              lng={loc.lng}
+              speedMph={loc.speed ?? null}
+              battery={isMe ? myPos?.battery ?? loc.battery ?? null : loc.battery ?? null}
+              isLive={isLive}
+              ageSec={ageSec}
+              onClose={() => setFocusId(null)}
+            />
+          );
+        })()}
       </div>
 
       {/* Sheet area */}
