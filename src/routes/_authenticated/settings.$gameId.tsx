@@ -84,10 +84,14 @@ function GameSettingsPage() {
       setInheritTargets(gg.inherit_targets ?? true);
       setFullTeamElimination(gg.full_team_elimination ?? false);
       setPurgeEnabled(!!gg.purge_enabled);
-      setPurgeMinutes(gg.purge_interval_minutes ?? 60);
+      setPurgeLengthMinutes(gg.purge_length_minutes ?? 30);
       setRandomPurge(!!gg.random_purge);
+      setRandomPurgeFrequency((gg.random_purge_frequency as "daily" | "weekly") ?? "daily");
       setDailyPurgeEnabled(!!gg.daily_purge_enabled);
       setDailyPurgeTime((gg.daily_purge_time ?? "20:00:00").slice(0, 5));
+      setDailyPurgeDay(gg.daily_purge_day_of_week ?? 1);
+      setUnlimitedRounds(!!gg.unlimited_rounds);
+      setRoundLengthDays(gg.round_length_days ?? 1);
     }
     const { data: ps } = await supabase.from("players").select("id, user_id, status, team_id").eq("game_id", gameId);
     const arr = (ps as PlayerRow[]) ?? [];
