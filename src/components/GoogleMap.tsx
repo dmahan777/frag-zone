@@ -44,13 +44,27 @@ function loadMaps(): Promise<void> {
   return loaderPromise;
 }
 
-function svgPin(photoUrl: string | null | undefined, ringColor: string) {
+// Cache photo URLs -> data URLs so the SVG <image> renders reliably (no CORS taint)
+const photoCache = new Map<string, string>();
+async function toDataUrl(url: string): Promise<string> {
+  if (photoCache.has(url)) return photoCache.get(url)!;
+  const res = await fetch(url, { mode: "cors" });
+  const blob = await res.blob();
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+  photoCache.set(url, dataUrl);
+  return dataUrl;
+}
+
+function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
   // Circular avatar pin with colored ring + pointer tail
-  const safe = (photoUrl || "").replace(/"/g, "&quot;");
-  const initials = "?";
-  const img = safe
-    ? `<image href="${safe}" x="6" y="6" width="44" height="44" clip-path="circle(22 at 28 28)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">${initials}</text>`;
+  const img = photoDataUrl
+    ? `<image href="${photoDataUrl}" x="6" y="6" width="44" height="44" clip-path="circle(22 at 28 28)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">?</text>`;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="68" viewBox="0 0 56 68">
       <defs>
@@ -119,27 +133,45 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
   useEffect(() => {
     const google = (window as any).google;
     if (!mapRef.current || !google?.maps) return;
+    let cancelled = false;
+
     markerObjs.current.forEach((m) => m.setMap(null));
-    markerObjs.current = markers.map((m) => new google.maps.Marker({
-      position: { lat: m.lat, lng: m.lng },
-      map: mapRef.current,
-      icon: {
-        url: svgPin(m.photoUrl, m.ringColor || "#3b82f6"),
-        scaledSize: new google.maps.Size(56, 68),
-        anchor: new google.maps.Point(28, 64),
-      },
-      title: m.label,
-    }));
+    markerObjs.current = markers.map((m) => {
+      const initialDataUrl = m.photoUrl ? photoCache.get(m.photoUrl) ?? null : null;
+      const marker = new google.maps.Marker({
+        position: { lat: m.lat, lng: m.lng },
+        map: mapRef.current,
+        icon: {
+          url: svgPin(initialDataUrl, m.ringColor || "#3b82f6"),
+          scaledSize: new google.maps.Size(56, 68),
+          anchor: new google.maps.Point(28, 64),
+        },
+        title: m.label,
+      });
+      // If we don't have the photo cached yet, fetch + swap icon
+      if (m.photoUrl && !initialDataUrl) {
+        toDataUrl(m.photoUrl).then((dataUrl) => {
+          if (cancelled) return;
+          marker.setIcon({
+            url: svgPin(dataUrl, m.ringColor || "#3b82f6"),
+            scaledSize: new google.maps.Size(56, 68),
+            anchor: new google.maps.Point(28, 64),
+          });
+        }).catch(() => { /* keep placeholder */ });
+      }
+      return marker;
+    });
+
     if (markers.length > 0) {
       const bounds = new google.maps.LatLngBounds();
       markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
       mapRef.current.fitBounds(bounds, 80);
-      // Cap zoom so single markers don't zoom in too far
       const listener = google.maps.event.addListenerOnce(mapRef.current, "idle", () => {
         if (mapRef.current.getZoom() > 17) mapRef.current.setZoom(17);
       });
-      return () => google.maps.event.removeListener(listener);
+      return () => { cancelled = true; google.maps.event.removeListener(listener); };
     }
+    return () => { cancelled = true; };
   }, [markers]);
 
   return (
