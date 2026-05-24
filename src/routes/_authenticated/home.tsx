@@ -99,9 +99,13 @@ function HomePage() {
                 <Stat icon={<Crosshair className="h-3.5 w-3.5" />} label="Round" value={`${game.current_round}/${game.total_rounds}`} />
                 <Stat icon={<Clock className="h-3.5 w-3.5" />} label="Ends in" value={formatCountdown(game.round_ends_at)} />
               </div>
+              <button onClick={() => navigate({ to: "/game/$gameId", params: { gameId: game.id } })}
+                className="mt-4 w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-display font-bold py-3 rounded-xl shadow-glow-primary active:scale-[0.98] transition">
+                Enter game
+              </button>
               {game.host_id === user?.id && (
                 <button onClick={() => navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}
-                  className="mt-4 w-full bg-card/60 border border-primary/30 text-primary rounded-xl py-2.5 text-sm font-semibold">
+                  className="mt-2 w-full bg-card/60 border border-primary/30 text-primary rounded-xl py-2.5 text-sm font-semibold">
                   Open admin panel
                 </button>
               )}
