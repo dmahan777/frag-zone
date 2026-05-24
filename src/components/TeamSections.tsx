@@ -42,7 +42,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams, playersPerTeam }:
     }
 
     const { data, error } = await supabase.from("teams").insert({
-      game_id: gameId, name: name.trim(), color, created_by: meId, max_members: maxMembers,
+      game_id: gameId, name: name.trim(), color, created_by: meId, max_members: playersPerTeam,
     }).select().single();
     if (error) { setBusy(false); toast.error(error.message); return; }
     const created = data as TeamRow;
