@@ -46,70 +46,131 @@ function Login() {
     }
   };
 
+  const isSignin = mode === "signin";
+
   return (
     <MobileShell>
-      <div className="min-h-screen flex flex-col px-6 pt-16 pb-10 bg-grid">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow-primary">
-            <Crosshair className="h-6 w-6 text-primary-foreground" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-display font-extrabold leading-none text-glow-primary">FRAG</h1>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">Drop in. Stay alive.</p>
-          </div>
+      <div className="relative min-h-screen flex flex-col overflow-hidden bg-background">
+        {/* Background FX */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: "radial-gradient(hsl(var(--foreground)) 1px, transparent 0)",
+              backgroundSize: "24px 24px",
+            }}
+          />
+          <div className="absolute -top-20 -left-20 h-64 w-64 rounded-full bg-primary/20 blur-[120px]" />
+          <div className="absolute top-1/2 -right-32 h-80 w-80 rounded-full bg-secondary/15 blur-[150px]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
         </div>
 
-        <div className="mt-16">
-          <h2 className="text-3xl font-display font-bold">{mode === "signin" ? "Welcome back" : "Join the game"}</h2>
-          <p className="text-muted-foreground text-sm mt-2">
-            {mode === "signin" ? "Sign in to your Frag account." : "Create your operator profile."}
-          </p>
+        {/* Content */}
+        <div className="relative z-10 flex flex-col min-h-screen px-8 pt-14 pb-8">
+          {/* Header / Logo */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-xl bg-primary/40 blur-lg animate-pulse" />
+              <div className="relative h-14 w-14 rounded-xl bg-card border border-primary/50 flex items-center justify-center shadow-[inset_0_0_12px_hsl(var(--primary)/0.25)]">
+                <Crosshair className="h-6 w-6 text-primary" strokeWidth={2.5} />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-display font-extrabold uppercase tracking-tighter leading-none text-foreground">
+                FRAG
+              </h1>
+              <p className="text-[10px] mt-1 uppercase tracking-[0.2em] font-semibold text-muted-foreground">
+                Drop in. Stay alive.
+              </p>
+            </div>
+          </div>
+
+          {/* Welcome */}
+          <div className="mt-20">
+            <h2 className="text-4xl font-display font-bold tracking-tight text-foreground">
+              {isSignin ? "Welcome back" : "Join the game"}
+            </h2>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              {isSignin
+                ? "Enter your credentials to re-enter the arena."
+                : "Create your operator profile to drop in."}
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={submit} className="mt-10 space-y-4">
+            <div className="space-y-1.5">
+              <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Identity
+              </label>
+              <div className="relative group">
+                <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60 group-focus-within:text-primary transition-colors" />
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="w-full bg-card/40 border border-border rounded-2xl py-4 pl-12 pr-4 text-foreground placeholder:text-muted-foreground/60 outline-none backdrop-blur-sm transition-all focus:bg-card/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Access Key
+              </label>
+              <div className="relative group">
+                <Lock className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground/60 group-focus-within:text-secondary transition-colors" />
+                <input
+                  required
+                  type="password"
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password (min 6 chars)"
+                  className="w-full bg-card/40 border border-border rounded-2xl py-4 pl-12 pr-4 text-foreground placeholder:text-muted-foreground/60 outline-none backdrop-blur-sm transition-all focus:bg-card/80 focus:border-secondary/50 focus:ring-1 focus:ring-secondary/20"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="relative w-full group mt-6 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary via-primary/70 to-secondary opacity-60 blur transition duration-300 group-hover:opacity-100" />
+              <div className="relative flex items-center justify-center w-full bg-background py-4 rounded-2xl">
+                <span className="font-display font-bold text-lg uppercase tracking-wider text-foreground">
+                  {loading ? "..." : isSignin ? "Sign In" : "Create Account"}
+                </span>
+              </div>
+            </button>
+          </form>
+
+          {/* Footer links */}
+          <div className="mt-8 flex flex-col items-center gap-3 text-sm">
+            <button
+              type="button"
+              onClick={() => setMode(isSignin ? "signup" : "signin")}
+              className="text-muted-foreground"
+            >
+              {isSignin ? "New recruit? " : "Already have an account? "}
+              <span className="text-primary font-bold underline-offset-4 hover:text-primary/80 transition-colors">
+                {isSignin ? "Create account" : "Sign in"}
+              </span>
+            </button>
+          </div>
+
+          {/* Legal footer */}
+          <div className="mt-auto pt-10">
+            <p className="text-[10px] text-center leading-relaxed font-medium uppercase tracking-wider text-muted-foreground/60 px-4">
+              By continuing, you agree to play fair.
+              <br />
+              No real weapons. Gel/water only. Secure channel activated.
+            </p>
+          </div>
         </div>
-
-        <form onSubmit={submit} className="mt-8 space-y-3">
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-              className="w-full bg-card border border-border rounded-2xl pl-11 pr-4 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-glow-primary transition"
-            />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              required
-              type="password"
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password (min 6 chars)"
-              className="w-full bg-card border border-border rounded-2xl pl-11 pr-4 py-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-glow-primary transition"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-display font-bold py-4 rounded-2xl shadow-glow-primary active:scale-[0.98] transition disabled:opacity-50"
-          >
-            {loading ? "..." : mode === "signin" ? "Sign In" : "Create Account"}
-          </button>
-        </form>
-
-        <button
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-6 text-sm text-muted-foreground hover:text-primary transition"
-        >
-          {mode === "signin" ? "New here? " : "Already have an account? "}
-          <span className="text-primary font-semibold">{mode === "signin" ? "Create account" : "Sign in"}</span>
-        </button>
-
-        <p className="mt-auto text-[11px] text-center text-muted-foreground/70">
-          By continuing, you agree to play fair. No real weapons. Gel/water only.
-        </p>
       </div>
     </MobileShell>
   );
