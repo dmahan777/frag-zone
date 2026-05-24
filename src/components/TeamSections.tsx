@@ -13,7 +13,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
   const [maxMembers, setMaxMembers] = useState(4);
   const [busy, setBusy] = useState(false);
 
-  const alreadyCreated = useMemo(() => teams.some((t) => t.created_by === meId), [teams, meId]);
+  void teams;
 
   const create = async () => {
     if (!meId) { toast.error("Sign in to create a team"); return; }
