@@ -78,11 +78,9 @@ function PlayersScreen() {
   const counts = useMemo(() => ({
     All: players.length,
     Active: players.filter((p) => p.status === "active").length,
-    Targets: me ? players.filter((p) => p.id === me.target_id).length : 0,
-    Bounties: players.filter((p) => (p.kills ?? 0) >= 3).length,
-  }), [players, me]);
+  }), [players]);
 
-  const FILTERS: Filter[] = ["All", "Active", "Targets", "Bounties"];
+  const FILTERS: Filter[] = ["All", "Active"];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-28">
