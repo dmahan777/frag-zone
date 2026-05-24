@@ -253,7 +253,11 @@ function GameSettingsPage() {
 
       {/* Round settings */}
       <Section icon={<Timer className="h-4 w-4" />} title="Round settings" subtitle="Rules for how eliminations and rounds flow.">
-        <SliderRow label="Total rounds" value={totalRounds} min={1} max={20} onChange={setTotalRounds} suffix="rounds" />
+        <Toggle label="Unlimited rounds" hint="Game keeps going until you end it manually." checked={unlimitedRounds} onChange={setUnlimitedRounds} />
+        {!unlimitedRounds && (
+          <SliderRow className="mt-3" label="Total rounds" value={totalRounds} min={1} max={20} onChange={setTotalRounds} suffix="rounds" />
+        )}
+        <SliderRow className="mt-3" label="Round length" value={roundLengthDays} min={1} max={14} onChange={setRoundLengthDays} suffix={roundLengthDays === 1 ? "day" : "days"} />
         <p className="text-[11px] text-muted-foreground mt-1">Currently on round {game.current_round || 0}.</p>
 
         <div className="mt-4 space-y-2">
@@ -273,33 +277,68 @@ function GameSettingsPage() {
         <Toggle label="Enable purge" hint="Turn purges on for this game." checked={purgeEnabled} onChange={setPurgeEnabled} />
 
         <div className={`mt-3 ${purgeEnabled ? "" : "opacity-50 pointer-events-none"}`}>
-          <SliderRow label="Purge every" value={purgeMinutes} min={5} max={240} step={5} onChange={setPurgeMinutes} suffix="min" />
+          <SliderRow label="Purge length" value={purgeLengthMinutes} min={5} max={240} step={5} onChange={setPurgeLengthMinutes} suffix="min" />
 
           <div className="mt-4 space-y-2">
             <Toggle
               label="Random purge"
-              hint="A purge can also kick off at a random time during a round."
+              hint="A purge kicks off at a random time."
               checked={randomPurge}
               onChange={setRandomPurge}
             />
+            {randomPurge && (
+              <div className="bg-card border border-border rounded-xl px-3 py-3">
+                <p className="text-sm font-semibold mb-2">Random purge happens</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["daily", "weekly"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setRandomPurgeFrequency(f)}
+                      className={`rounded-lg py-2 text-sm font-semibold capitalize border ${randomPurgeFrequency === f ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground"}`}
+                    >
+                      Once a {f === "daily" ? "day" : "week"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <Toggle
-              label="Daily purge"
-              hint="A purge happens every day at the same time."
+              label="Scheduled purge"
+              hint="A purge happens on a specific day and time each week."
               checked={dailyPurgeEnabled}
               onChange={setDailyPurgeEnabled}
             />
             {dailyPurgeEnabled && (
-              <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3">
-                <span className="text-sm font-semibold">Daily purge time</span>
-                <input
-                  type="time"
-                  value={dailyPurgeTime}
-                  onChange={(e) => setDailyPurgeTime(e.target.value)}
-                  className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
-                />
-              </label>
+              <div className="bg-card border border-border rounded-xl px-3 py-3 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold mb-2">Day</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {DAYS.map((d, i) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDailyPurgeDay(i)}
+                        className={`rounded-lg py-1.5 text-[11px] font-bold border ${dailyPurgeDay === i ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground"}`}
+                      >
+                        {d.slice(0, 3)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold">Time</span>
+                  <input
+                    type="time"
+                    value={dailyPurgeTime}
+                    onChange={(e) => setDailyPurgeTime(e.target.value)}
+                    className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
+                  />
+                </label>
+              </div>
             )}
           </div>
+
         </div>
       </Section>
     </div>
