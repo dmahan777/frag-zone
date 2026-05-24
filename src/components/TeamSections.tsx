@@ -16,16 +16,41 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
   const alreadyCreated = useMemo(() => teams.some((t) => t.created_by === meId), [teams, meId]);
 
   const create = async () => {
-    if (!meId || !name.trim()) return;
+    if (!meId) { toast.error("Sign in to create a team"); return; }
+    if (!name.trim()) { toast.error("Give your team a name"); return; }
     setBusy(true);
+
+    // Ensure a player row exists for this user in this game (RLS on teams_insert_in_game requires it).
+    let playerId = myPlayerId;
+    if (!playerId) {
+      const { data: existing } = await supabase
+        .from("players")
+        .select("id")
+        .eq("game_id", gameId)
+        .eq("user_id", meId)
+        .maybeSingle();
+      if (existing?.id) {
+        playerId = existing.id as string;
+      } else {
+        const { data: inserted, error: pErr } = await supabase
+          .from("players")
+          .insert({ game_id: gameId, user_id: meId })
+          .select("id")
+          .single();
+        if (pErr) { setBusy(false); toast.error(pErr.message); return; }
+        playerId = (inserted as { id: string }).id;
+      }
+    }
+
     const { data, error } = await supabase.from("teams").insert({
       game_id: gameId, name: name.trim(), color, created_by: meId, max_members: maxMembers,
     }).select().single();
-    setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    setName("");
+    if (error) { setBusy(false); toast.error(error.message); return; }
     const created = data as TeamRow;
-    if (myPlayerId) await supabase.from("players").update({ team_id: created.id }).eq("id", myPlayerId);
+    const { error: upErr } = await supabase.from("players").update({ team_id: created.id }).eq("id", playerId);
+    setBusy(false);
+    if (upErr) { toast.error(upErr.message); return; }
+    setName("");
     toast.success(`Created team ${created.name}`);
   };
 
