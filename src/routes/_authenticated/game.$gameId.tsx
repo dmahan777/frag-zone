@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleMap } from "@/components/GoogleMap";
@@ -210,8 +210,13 @@ function GameScreen() {
           </div>
         </div>
 
-        {/* Tab body */}
-        <div className="px-4 mt-4">
+        {/* Tab body — swipe left/right to switch tabs */}
+        <SwipeTabs
+          tab={tab}
+          setTab={setTab}
+          tabs={TABS.filter((t) => t !== "Admin" || isHost)}
+          className="px-4 mt-4"
+        >
           {tab === "Activity" && <ActivitySection />}
           {tab === "Players" && (
             <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
@@ -228,7 +233,35 @@ function GameScreen() {
               Open admin panel
             </button>
           )}
-        </div>
+        </SwipeTabs>
+      </div>
+    </div>
+  );
+}
+
+function SwipeTabs({ tab, setTab, tabs, className, children }: { tab: Tab; setTab: (t: Tab) => void; tabs: Tab[]; className?: string; children: React.ReactNode }) {
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (startX.current === null || startY.current === null) return;
+    const dx = e.changedTouches[0].clientX - startX.current;
+    const dy = e.changedTouches[0].clientY - startY.current;
+    startX.current = null;
+    startY.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    const idx = tabs.indexOf(tab);
+    if (idx === -1) return;
+    if (dx < 0 && idx < tabs.length - 1) setTab(tabs[idx + 1]);
+    if (dx > 0 && idx > 0) setTab(tabs[idx - 1]);
+  };
+  return (
+    <div className={className} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div key={tab} className="animate-fade-in">
+        {children}
       </div>
     </div>
   );
