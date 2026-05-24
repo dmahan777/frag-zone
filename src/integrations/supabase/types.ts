@@ -14,7 +14,219 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      eliminations: {
+        Row: {
+          created_at: string
+          eliminated_id: string
+          eliminator_id: string
+          game_id: string
+          id: string
+          points_awarded: number
+          proof_url: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          eliminated_id: string
+          eliminator_id: string
+          game_id: string
+          id?: string
+          points_awarded?: number
+          proof_url?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          eliminated_id?: string
+          eliminator_id?: string
+          game_id?: string
+          id?: string
+          points_awarded?: number
+          proof_url?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eliminations_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          game_id: string
+          id: string
+          message: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          game_id: string
+          id?: string
+          message: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          game_id?: string
+          id?: string
+          message?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          code: string
+          created_at: string
+          current_round: number
+          host_id: string
+          id: string
+          mode: string
+          name: string
+          revive_enabled: boolean
+          round_ends_at: string | null
+          safe_zones: Json
+          status: string
+          total_rounds: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_round?: number
+          host_id: string
+          id?: string
+          mode?: string
+          name: string
+          revive_enabled?: boolean
+          round_ends_at?: string | null
+          safe_zones?: Json
+          status?: string
+          total_rounds?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_round?: number
+          host_id?: string
+          id?: string
+          mode?: string
+          name?: string
+          revive_enabled?: boolean
+          round_ends_at?: string | null
+          safe_zones?: Json
+          status?: string
+          total_rounds?: number
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          game_id: string
+          id: string
+          joined_at: string
+          kills: number
+          power_ups: Json
+          rank: number | null
+          status: string
+          survival_days: number
+          target_id: string | null
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          game_id: string
+          id?: string
+          joined_at?: string
+          kills?: number
+          power_ups?: Json
+          rank?: number | null
+          status?: string
+          survival_days?: number
+          target_id?: string | null
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          game_id?: string
+          id?: string
+          joined_at?: string
+          kills?: number
+          power_ups?: Json
+          rank?: number | null
+          status?: string
+          survival_days?: number
+          target_id?: string | null
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          badges: string[]
+          created_at: string
+          display_name: string | null
+          id: string
+          is_premium: boolean
+          onboarded: boolean
+          phone: string | null
+          photo_url: string | null
+          school: string | null
+          stats: Json
+          username: string | null
+        }
+        Insert: {
+          badges?: string[]
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_premium?: boolean
+          onboarded?: boolean
+          phone?: string | null
+          photo_url?: string | null
+          school?: string | null
+          stats?: Json
+          username?: string | null
+        }
+        Update: {
+          badges?: string[]
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_premium?: boolean
+          onboarded?: boolean
+          phone?: string | null
+          photo_url?: string | null
+          school?: string | null
+          stats?: Json
+          username?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
