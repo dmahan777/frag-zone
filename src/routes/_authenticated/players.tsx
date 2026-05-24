@@ -65,15 +65,6 @@ function PlayersPage() {
     );
   }, [rows, q]);
 
-  const teams = useMemo(() => {
-    const map = new Map<string, Row[]>();
-    for (const r of filtered) {
-      if (!r.team_id) continue;
-      if (!map.has(r.team_id)) map.set(r.team_id, []);
-      map.get(r.team_id)!.push(r);
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
-  }, [filtered]);
 
   return (
     <div className="px-5 pt-12 pb-4">
