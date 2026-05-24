@@ -318,6 +318,30 @@ function GameScreen() {
           )}
         </SwipeTabs>
       </div>
+
+      {showTeamPrompt && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-surface border border-border rounded-3xl p-6 shadow-2xl">
+            <h2 className="font-display text-xl font-bold text-foreground">Pick your squad</h2>
+            <p className="text-sm text-muted-foreground mt-1">You just joined the game. Make a new team or jump into one that already exists.</p>
+            <div className="mt-5 grid gap-3">
+              <button
+                onClick={() => { setTab("Team"); dismissTeamPrompt(); }}
+                className="w-full bg-gradient-to-r from-primary to-secondary text-primary-foreground font-display font-bold py-3.5 rounded-2xl shadow-glow-primary"
+              >
+                Make a team
+              </button>
+              <button
+                onClick={() => { setTab("Team"); dismissTeamPrompt(); }}
+                className="w-full bg-card border border-border text-foreground font-display font-bold py-3.5 rounded-2xl"
+              >
+                Join a team
+              </button>
+              <button onClick={dismissTeamPrompt} className="text-xs text-muted-foreground mt-1">Skip for now</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
