@@ -468,7 +468,7 @@ function PlayerRowCard({ player, profile, accent, badge }: { player: PlayerRow; 
   );
 }
 
-function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId, myPlayerId, myTeamId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null; teams: TeamRow[]; gameId: string; myPlayerId: string | null; myTeamId: string | null }) {
+function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId, myPlayerId, myTeamId, playersPerTeam }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null; teams: TeamRow[]; gameId: string; myPlayerId: string | null; myTeamId: string | null; playersPerTeam: number }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<PlayerFilter>("All");
 
