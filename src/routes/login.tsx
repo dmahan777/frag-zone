@@ -5,6 +5,7 @@ import { MobileShell } from "@/components/MobileShell";
 import { supabase } from "@/integrations/supabase/client";
 import { Crosshair, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
+import stickmenHunt from "@/assets/stickmen-hunt.png";
 
 export const Route = createFileRoute("/login")({
   component: Login,
