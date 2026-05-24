@@ -20,6 +20,7 @@ import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/ma
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedClipsRouteImport } from './routes/_authenticated/clips'
+import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
 import { Route as AuthenticatedAdminGameIdRouteImport } from './routes/_authenticated/admin.$gameId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -77,6 +78,11 @@ const AuthenticatedClipsRoute = AuthenticatedClipsRouteImport.update({
   path: '/clips',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
+  id: '/game/$gameId',
+  path: '/game/$gameId',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminGameIdRoute =
   AuthenticatedAdminGameIdRouteImport.update({
     id: '/admin/$gameId',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/game/$gameId': typeof AuthenticatedGameGameIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/game/$gameId': typeof AuthenticatedGameGameIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/target': typeof AuthenticatedTargetRoute
   '/_authenticated/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/target'
     | '/admin/$gameId'
+    | '/game/$gameId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/target'
     | '/admin/$gameId'
+    | '/game/$gameId'
   id:
     | '__root__'
     | '/'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/target'
     | '/_authenticated/admin/$gameId'
+    | '/_authenticated/game/$gameId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -254,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClipsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/game/$gameId': {
+      id: '/_authenticated/game/$gameId'
+      path: '/game/$gameId'
+      fullPath: '/game/$gameId'
+      preLoaderRoute: typeof AuthenticatedGameGameIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/$gameId': {
       id: '/_authenticated/admin/$gameId'
       path: '/admin/$gameId'
@@ -273,6 +292,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedTargetRoute: typeof AuthenticatedTargetRoute
   AuthenticatedAdminGameIdRoute: typeof AuthenticatedAdminGameIdRoute
+  AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -284,6 +304,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedTargetRoute: AuthenticatedTargetRoute,
   AuthenticatedAdminGameIdRoute: AuthenticatedAdminGameIdRoute,
+  AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -299,3 +320,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
