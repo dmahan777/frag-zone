@@ -451,7 +451,47 @@ function GameSettingsPage() {
             <Toggle label="Radar ping" hint="Reveals nearby players for a few seconds." checked={puRadar} onChange={setPuRadar} />
             <Toggle label="Double points" hint="Next elimination is worth 2x." checked={puDouble} onChange={setPuDouble} />
             <Toggle label="Revive token" hint="Lets an eliminated player come back in." checked={puRevive} onChange={setPuRevive} />
+            <Toggle label="Random map spawn" hint="Powerups appear at random spots on the map for players to grab." checked={puMapSpawn} onChange={setPuMapSpawn} />
           </div>
+
+          {puMapSpawn && (
+            <div className="mt-4 bg-card border border-border rounded-xl p-3 space-y-4">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
+              <SliderRow
+                label="Spawn area radius"
+                value={puSpawnRadius}
+                min={50}
+                max={5000}
+                step={50}
+                onChange={setPuSpawnRadius}
+                suffix="m"
+              />
+              <div>
+                <p className="text-sm text-muted-foreground mb-1.5">How often</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["daily", "weekly"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setPuSpawnFreq(f)}
+                      className={`h-10 rounded-xl text-sm font-semibold border ${puSpawnFreq === f ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"}`}
+                    >
+                      {f === "daily" ? "Each day" : "Each week"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <SliderRow
+                label={`Powerups per ${puSpawnFreq === "daily" ? "day" : "week"}`}
+                value={puSpawnCount}
+                min={1}
+                max={25}
+                onChange={setPuSpawnCount}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                {puSpawnCount} powerup{puSpawnCount === 1 ? "" : "s"} will randomly spawn within {puSpawnRadius}m {puSpawnFreq === "daily" ? "each day" : "each week"}.
+              </p>
+            </div>
+          )}
         </Panel>
       )}
     </div>
