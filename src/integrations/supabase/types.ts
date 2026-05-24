@@ -203,25 +203,31 @@ export type Database = {
       player_locations: {
         Row: {
           accuracy: number | null
+          battery: number | null
           game_id: string
           lat: number
           lng: number
+          speed: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           accuracy?: number | null
+          battery?: number | null
           game_id: string
           lat: number
           lng: number
+          speed?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           accuracy?: number | null
+          battery?: number | null
           game_id?: string
           lat?: number
           lng?: number
+          speed?: number | null
           updated_at?: string
           user_id?: string
         }

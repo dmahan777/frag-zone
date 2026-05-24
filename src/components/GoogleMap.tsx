@@ -14,6 +14,8 @@ type Props = {
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
+  onMarkerClick?: (id: string) => void;
+  focusId?: string | null; // pan + zoom to this marker
 };
 
 const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
@@ -82,7 +84,7 @@ function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: Props) {
+export function GoogleMap({ markers = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerObjs = useRef<any[]>([]);
@@ -148,7 +150,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
         },
         title: m.label,
       });
-      // If we don't have the photo cached yet, fetch + swap icon
+      if (onMarkerClick) marker.addListener("click", () => onMarkerClick(m.id));
       if (m.photoUrl && !initialDataUrl) {
         toDataUrl(m.photoUrl).then((dataUrl) => {
           if (cancelled) return;
@@ -157,12 +159,18 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
             scaledSize: new google.maps.Size(56, 68),
             anchor: new google.maps.Point(28, 64),
           });
-        }).catch(() => { /* keep placeholder */ });
+        }).catch(() => {});
       }
       return marker;
     });
 
-    if (markers.length > 0) {
+    if (focusId) {
+      const target = markers.find((m) => m.id === focusId);
+      if (target) {
+        mapRef.current.panTo({ lat: target.lat, lng: target.lng });
+        mapRef.current.setZoom(18);
+      }
+    } else if (markers.length > 0) {
       const bounds = new google.maps.LatLngBounds();
       markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
       mapRef.current.fitBounds(bounds, 80);
@@ -172,7 +180,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
       return () => { cancelled = true; google.maps.event.removeListener(listener); };
     }
     return () => { cancelled = true; };
-  }, [markers]);
+  }, [markers, onMarkerClick, focusId]);
 
   return (
     <div className={`h-full w-full overflow-hidden ${className}`}>
