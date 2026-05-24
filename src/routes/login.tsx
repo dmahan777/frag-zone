@@ -162,20 +162,8 @@ function Login() {
             </button>
           </div>
 
-          {/* Stickmen art */}
-          <div className="mt-auto pt-12 -mx-8 relative">
-            <img
-              src={stickmenHunt}
-              alt="Two stickmen, one aiming a water pistol at the other's back"
-              loading="lazy"
-              width={1280}
-              height={512}
-              className="w-full h-auto opacity-70 mix-blend-screen select-none pointer-events-none"
-            />
-          </div>
-
           {/* Legal footer */}
-          <div className="pt-4">
+          <div className="mt-auto pt-10">
             <p className="text-[10px] text-center leading-relaxed font-medium uppercase tracking-wider text-muted-foreground/60 px-4">
               By continuing, you agree to play fair.
               <br />
