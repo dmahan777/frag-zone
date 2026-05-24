@@ -153,6 +153,19 @@ function GameScreen() {
     } catch {}
   };
 
+  // Prompt new joiners to make or join a team
+  const [teamPromptDismissed, setTeamPromptDismissed] = useState(false);
+  useEffect(() => {
+    if (!user?.id) return;
+    const key = `team-prompt-dismissed:${gameId}:${user.id}`;
+    if (sessionStorage.getItem(key)) setTeamPromptDismissed(true);
+  }, [gameId, user?.id]);
+  const showTeamPrompt = !!me && !me.team_id && !teamPromptDismissed;
+  const dismissTeamPrompt = () => {
+    if (user?.id) sessionStorage.setItem(`team-prompt-dismissed:${gameId}:${user.id}`, "1");
+    setTeamPromptDismissed(true);
+  };
+
   if (!game) {
     return <div className="h-screen flex items-center justify-center text-muted-foreground text-sm">Loading game…</div>;
   }
