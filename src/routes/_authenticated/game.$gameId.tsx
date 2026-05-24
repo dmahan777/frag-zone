@@ -210,8 +210,13 @@ function GameScreen() {
           </div>
         </div>
 
-        {/* Tab body */}
-        <div className="px-4 mt-4">
+        {/* Tab body — swipe left/right to switch tabs */}
+        <SwipeTabs
+          tab={tab}
+          setTab={setTab}
+          tabs={TABS.filter((t) => t !== "Admin" || isHost)}
+          className="px-4 mt-4"
+        >
           {tab === "Activity" && <ActivitySection />}
           {tab === "Players" && (
             <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
