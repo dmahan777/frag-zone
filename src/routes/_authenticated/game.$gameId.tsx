@@ -237,7 +237,9 @@ function GameScreen() {
           tabs={TABS.filter((t) => t !== "Admin" || isHost)}
           className="px-4 mt-4"
         >
-          {tab === "Activity" && <ActivitySection />}
+          {tab === "Activity" && (
+            <ActivitySection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
+          )}
           {tab === "Players" && (
             <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
