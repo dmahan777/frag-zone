@@ -176,7 +176,12 @@ function GameScreen() {
             const visible = t !== "Admin" || isHost;
             if (!visible) return null;
             return (
-              <button key={t} onClick={() => setTab(t)}
+              <button
+                key={t}
+                onClick={() => {
+                  if (t === "Activity") navigate({ to: "/feed" });
+                  else setTab(t);
+                }}
                 className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition
                   ${active
                     ? "border-transparent text-foreground bg-transparent"
