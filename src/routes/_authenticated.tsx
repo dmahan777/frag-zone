@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileShell } from "@/components/MobileShell";
@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthenticatedLayout() {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const hideNav = pathname === "/menu";
 
   useEffect(() => {
     if (loading) return;
@@ -30,10 +32,10 @@ function AuthenticatedLayout() {
 
   return (
     <MobileShell>
-      <div className="min-h-screen pb-28">
+      <div className={`min-h-screen ${hideNav ? "" : "pb-28"}`}>
         <Outlet />
       </div>
-      <BottomNav />
+      {!hideNav && <BottomNav />}
     </MobileShell>
   );
 }

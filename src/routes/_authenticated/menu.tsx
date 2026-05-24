@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateGameCode } from "@/lib/game-utils";
 import { requestLocationOnce } from "@/lib/location";
 import { toast } from "sonner";
-import { Plus, LogIn, ChevronRight, Gamepad2 } from "lucide-react";
+import { Plus, LogIn, ChevronRight, Gamepad2, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/menu")({
   component: MainMenu,
@@ -213,38 +213,76 @@ function MainMenu() {
         </div>
       )}
 
-      {/* Your games */}
+      {/* Active games */}
       <div className="px-5 mt-8">
-        <h2 className="font-display font-extrabold text-xl">Your games</h2>
+        <h2 className="font-display font-extrabold text-xl">Active games</h2>
         <p className="text-sm text-muted-foreground mt-0.5">Tap to jump back in.</p>
 
         <div className="mt-4 space-y-2">
           {loading && <p className="text-sm text-muted-foreground text-center py-8">Loading…</p>}
-          {!loading && games.length === 0 && (
+          {!loading && games.filter((g) => g.status !== "ended" && g.status !== "completed" && g.status !== "finished").length === 0 && (
             <div className="bg-surface border border-border rounded-2xl p-6 text-center">
               <Gamepad2 className="h-8 w-8 mx-auto text-muted-foreground" />
-              <p className="mt-2 text-sm text-muted-foreground">You're not in any games yet.</p>
+              <p className="mt-2 text-sm text-muted-foreground">No active games.</p>
             </div>
           )}
-          {!loading && games.map((g) => (
-            <button
-              key={g.id}
-              onClick={() => navigate({ to: "/game/$gameId", params: { gameId: g.id } })}
-              className="w-full flex items-center gap-3 bg-surface border border-border rounded-2xl px-4 py-3 text-left active:scale-[0.99] transition"
-            >
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center">
-                <Gamepad2 className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold truncate">{g.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  Code {g.code} · {g.status}
-                  {g.host_id === user?.id ? " · Host" : ""}
-                </p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </button>
-          ))}
+          {!loading && games
+            .filter((g) => g.status !== "ended" && g.status !== "completed" && g.status !== "finished")
+            .map((g) => (
+              <button
+                key={g.id}
+                onClick={() => navigate({ to: "/game/$gameId", params: { gameId: g.id } })}
+                className="w-full flex items-center gap-3 bg-surface border border-border rounded-2xl px-4 py-3 text-left active:scale-[0.99] transition"
+              >
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/30 to-secondary/30 flex items-center justify-center">
+                  <Gamepad2 className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{g.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Code {g.code} · {g.status}
+                    {g.host_id === user?.id ? " · Host" : ""}
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            ))}
+        </div>
+      </div>
+
+      {/* Completed games */}
+      <div className="px-5 mt-8">
+        <h2 className="font-display font-extrabold text-xl">Completed games</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Past matches you've played in.</p>
+
+        <div className="mt-4 space-y-2">
+          {!loading && games.filter((g) => g.status === "ended" || g.status === "completed" || g.status === "finished").length === 0 && (
+            <div className="bg-surface border border-border rounded-2xl p-6 text-center">
+              <Trophy className="h-8 w-8 mx-auto text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">No completed games yet.</p>
+            </div>
+          )}
+          {!loading && games
+            .filter((g) => g.status === "ended" || g.status === "completed" || g.status === "finished")
+            .map((g) => (
+              <button
+                key={g.id}
+                onClick={() => navigate({ to: "/game/$gameId", params: { gameId: g.id } })}
+                className="w-full flex items-center gap-3 bg-surface border border-border rounded-2xl px-4 py-3 text-left active:scale-[0.99] transition opacity-80"
+              >
+                <div className="h-10 w-10 rounded-xl bg-muted/40 flex items-center justify-center">
+                  <Trophy className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold truncate">{g.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Code {g.code} · Completed
+                    {g.host_id === user?.id ? " · Host" : ""}
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            ))}
         </div>
       </div>
     </div>
