@@ -57,9 +57,17 @@ function GameScreen() {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId, user?.id]);
 
   useEffect(() => {
+  const loadTeams = async () => {
+    const { data } = await supabase.from("teams").select("id, name, color, created_by, max_members").eq("game_id", gameId).order("created_at");
+    setTeams((data as TeamRow[]) ?? []);
+  };
+  useEffect(() => { loadTeams(); /* eslint-disable-next-line */ }, [gameId]);
+
+  useEffect(() => {
     const ch = supabase.channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "players", filter: `game_id=eq.${gameId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "teams", filter: `game_id=eq.${gameId}` }, () => loadTeams())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line
