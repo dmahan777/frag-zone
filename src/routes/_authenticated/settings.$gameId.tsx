@@ -34,6 +34,10 @@ type Game = {
   powerup_radar_ping: boolean;
   powerup_double_points: boolean;
   powerup_revive_token: boolean;
+  powerup_map_spawn: boolean;
+  powerup_spawn_radius_m: number;
+  powerup_spawn_frequency: string;
+  powerup_spawn_count: number;
   round_starts_at: string | null;
 };
 
