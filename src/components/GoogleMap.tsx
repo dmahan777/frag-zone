@@ -89,10 +89,29 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
           zoomControl: false,
           clickableIcons: false,
           gestureHandling: "greedy",
+          backgroundColor: "#e5e3df",
         });
+        // Trigger a resize once the container has its final size — fixes blank tiles
+        // when the map is initialized inside a freshly-mounted flex/absolute parent.
+        const fire = () => {
+          if (!mapRef.current) return;
+          google.maps.event.trigger(mapRef.current, "resize");
+          mapRef.current.setCenter(fallbackCenter);
+        };
+        requestAnimationFrame(fire);
+        setTimeout(fire, 300);
+        if (ref.current && "ResizeObserver" in window) {
+          const ro = new ResizeObserver(() => fire());
+          ro.observe(ref.current);
+          (mapRef.current as any).__ro = ro;
+        }
       })
       .catch((e) => setErr(e.message));
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      const ro = (mapRef.current as any)?.__ro as ResizeObserver | undefined;
+      ro?.disconnect();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
