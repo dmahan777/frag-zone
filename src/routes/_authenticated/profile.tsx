@@ -48,7 +48,7 @@ function ProfilePage() {
         .update({ photo_url: pub.publicUrl })
         .eq("id", user.id);
       if (updErr) throw updErr;
-      await refresh?.();
+      await refreshProfile();
       toast.success("Photo updated");
     } catch (err) {
       toast.error((err as Error).message);
