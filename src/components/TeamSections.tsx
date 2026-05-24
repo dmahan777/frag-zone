@@ -54,13 +54,6 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
     toast.success(`Created team ${created.name}`);
   };
 
-  if (alreadyCreated) {
-    return (
-      <div className="bg-surface border border-border rounded-2xl p-4 text-center">
-        <p className="text-sm text-muted-foreground">You've already created a team for this game. See it in the <span className="font-semibold text-foreground">Team</span> tab.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-surface border border-border rounded-2xl p-4">
