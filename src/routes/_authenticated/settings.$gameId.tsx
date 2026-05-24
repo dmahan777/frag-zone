@@ -113,6 +113,10 @@ function GameSettingsPage() {
     setPuRadar(gg.powerup_radar_ping ?? true);
     setPuDouble(gg.powerup_double_points ?? true);
     setPuRevive(gg.powerup_revive_token ?? false);
+    setPuMapSpawn(!!gg.powerup_map_spawn);
+    setPuSpawnRadius(gg.powerup_spawn_radius_m ?? 500);
+    setPuSpawnFreq((gg.powerup_spawn_frequency as "daily" | "weekly") ?? "daily");
+    setPuSpawnCount(gg.powerup_spawn_count ?? 3);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
