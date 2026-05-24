@@ -335,6 +335,7 @@ export type Database = {
           created_by: string
           game_id: string
           id: string
+          max_members: number
           name: string
         }
         Insert: {
@@ -343,6 +344,7 @@ export type Database = {
           created_by: string
           game_id: string
           id?: string
+          max_members?: number
           name: string
         }
         Update: {
@@ -351,6 +353,7 @@ export type Database = {
           created_by?: string
           game_id?: string
           id?: string
+          max_members?: number
           name?: string
         }
         Relationships: []

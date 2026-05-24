@@ -20,6 +20,7 @@ const TABS: Tab[] = ["Activity", "Players", "Team", "Powerups", "Admin"];
 type GameRow = { id: string; name: string; code: string; status: string; host_id: string; current_round: number; total_rounds: number; round_ends_at: string | null };
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
+type TeamRow = { id: string; name: string; color: string; created_by: string; max_members: number };
 
 type PlayerFilter = "All" | "Active" | "Targets" | "Bounties";
 
@@ -35,6 +36,7 @@ function GameScreen() {
   const [tab, setTab] = useState<Tab>("Activity");
   const [locations, setLocations] = useState<Record<string, { lat: number; lng: number; speed?: number | null; battery?: number | null; updated_at?: string }>>({});
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [teams, setTeams] = useState<TeamRow[]>([]);
   const myPos = useLiveLocation(gameId, user?.id);
 
   const load = async () => {
@@ -55,10 +57,17 @@ function GameScreen() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId, user?.id]);
 
+  const loadTeams = async () => {
+    const { data } = await supabase.from("teams").select("id, name, color, created_by, max_members").eq("game_id", gameId).order("created_at");
+    setTeams((data as TeamRow[]) ?? []);
+  };
+  useEffect(() => { loadTeams(); /* eslint-disable-next-line */ }, [gameId]);
+
   useEffect(() => {
     const ch = supabase.channel(`game-${gameId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "players", filter: `game_id=eq.${gameId}` }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "teams", filter: `game_id=eq.${gameId}` }, () => loadTeams())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line
@@ -280,10 +289,10 @@ function GameScreen() {
             <ActivitySection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
           {tab === "Players" && (
-            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
+            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} teams={teams} gameId={gameId} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
           )}
           {tab === "Team" && (
-            <TeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
+            <MyTeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} teams={teams} players={players} profilesById={profilesById} />
           )}
           {tab === "Powerups" && (
             <EmptyHint title="No powerups" body="Power-ups and gear will show up here." />
@@ -413,7 +422,7 @@ function PlayerRowCard({ player, profile, accent, badge }: { player: PlayerRow; 
   );
 }
 
-function PlayersSection({ players, profilesById, meId, meTargetId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null }) {
+function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId, myPlayerId, myTeamId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null; teams: TeamRow[]; gameId: string; myPlayerId: string | null; myTeamId: string | null }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<PlayerFilter>("All");
 
@@ -486,26 +495,39 @@ function PlayersSection({ players, profilesById, meId, meTargetId }: { players: 
         })}
       </div>
 
+      {/* Create-a-team form */}
+      <div className="mt-5">
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+      </div>
+
       {/* Groups */}
-      <div className="mt-5 space-y-6">
+      <div className="mt-6 space-y-6">
         {grouped.length === 0 && <p className="text-center text-sm text-muted-foreground py-12">No players match.</p>}
-        {grouped.map(([teamName, members]) => (
-          <div key={teamName}>
-            <h3 className="font-display font-extrabold text-lg mb-3">{teamName}</h3>
-            <div className="grid grid-cols-4 gap-3">
-              {members.map((p) => {
-                const prof = profilesById[p.user_id];
-                const ring = ringFor(p);
-                return (
-                  <div key={p.id} className="flex flex-col items-center gap-1.5">
-                    <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
-                    <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
-                  </div>
-                );
-              })}
+        {grouped.map(([key, members]) => {
+          const team = teams.find((t) => t.id === key);
+          const label = team?.name ?? "Free agents";
+          return (
+            <div key={key}>
+              <div className="flex items-center gap-2 mb-3">
+                {team && <span className="h-4 w-4 rounded-full border border-border" style={{ background: team.color }} />}
+                <h3 className="font-display font-extrabold text-lg">{label}</h3>
+                {team && <span className="text-xs text-muted-foreground">({members.length}/{team.max_members})</span>}
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                {members.map((p) => {
+                  const prof = profilesById[p.user_id];
+                  const ring = ringFor(p);
+                  return (
+                    <div key={p.id} className="flex flex-col items-center gap-1.5">
+                      <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
+                      <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -589,39 +611,99 @@ function PlayerLocationCard({
   );
 }
 
-type TeamRow = { id: string; name: string; color: string; created_by: string };
-
-const TEAM_COLORS = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
-
-function TeamSection({ gameId, meId, myPlayerId, myTeamId }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null }) {
-  const [teams, setTeams] = useState<TeamRow[]>([]);
+function TeamCreator({ gameId, meId, myPlayerId, myTeamId, teams }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[] }) {
   const [name, setName] = useState("");
-  const [color, setColor] = useState(TEAM_COLORS[3]);
+  const [color, setColor] = useState("#3b82f6");
+  const [maxMembers, setMaxMembers] = useState(4);
   const [busy, setBusy] = useState(false);
 
-  const load = async () => {
-    const { data } = await supabase.from("teams").select("id, name, color, created_by").eq("game_id", gameId).order("created_at");
-    setTeams((data as TeamRow[]) ?? []);
-  };
-  useEffect(() => { load(); }, [gameId]);
+  const alreadyCreated = useMemo(() => teams.some((t) => t.created_by === meId), [teams, meId]);
 
   const create = async () => {
     if (!meId || !name.trim()) return;
     setBusy(true);
-    const { data, error } = await supabase.from("teams").insert({ game_id: gameId, name: name.trim(), color, created_by: meId }).select().single();
+    const { data, error } = await supabase.from("teams").insert({
+      game_id: gameId, name: name.trim(), color, created_by: meId, max_members: maxMembers,
+    }).select().single();
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     setName("");
-    setTeams((t) => [...t, data as TeamRow]);
     if (myPlayerId) await supabase.from("players").update({ team_id: (data as TeamRow).id }).eq("id", myPlayerId);
     toast.success(`Created team ${(data as TeamRow).name}`);
   };
 
-  const join = async (teamId: string) => {
-    if (!myPlayerId) return;
-    const { error } = await supabase.from("players").update({ team_id: teamId }).eq("id", myPlayerId);
-    if (error) toast.error(error.message); else toast.success("Joined team");
-  };
+  if (alreadyCreated) {
+    return (
+      <div className="bg-surface border border-border rounded-2xl p-4 text-center">
+        <p className="text-sm text-muted-foreground">You've already created a team for this game. See it in the <span className="font-semibold text-foreground">Team</span> tab.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-4">
+      <h3 className="font-display font-extrabold text-base mb-3">Create your team</h3>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Team name"
+        maxLength={40}
+        className="w-full bg-card border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary"
+      />
+
+      <div className="mt-4 flex items-center gap-3">
+        <label className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-border shrink-0 cursor-pointer" style={{ background: color }}>
+          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
+        </label>
+        <div className="flex-1">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Team color</p>
+          <p className="text-xs text-foreground/70 mt-0.5">Tap the circle to pick any color</p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Max members</p>
+          <span className="text-sm font-bold tabular-nums">{maxMembers}</span>
+        </div>
+        <input
+          type="range" min={2} max={20} step={1}
+          value={maxMembers}
+          onChange={(e) => setMaxMembers(parseInt(e.target.value))}
+          className="w-full mt-1 accent-primary"
+        />
+      </div>
+
+      <button
+        disabled={busy || !name.trim()}
+        onClick={create}
+        className="mt-4 w-full bg-primary text-primary-foreground font-display font-bold py-2.5 rounded-xl disabled:opacity-50 active:scale-[0.98] transition"
+      >
+        {busy ? "Creating…" : "Create team"}
+      </button>
+    </div>
+  );
+}
+
+function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, players, profilesById }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; players: PlayerRow[]; profilesById: Record<string, ProfileLite> }) {
+  const [points, setPoints] = useState(0);
+  const myTeam = useMemo(() => teams.find((t) => t.id === myTeamId) ?? null, [teams, myTeamId]);
+  const members = useMemo(() => players.filter((p) => p.team_id === myTeamId), [players, myTeamId]);
+  const totalKills = useMemo(() => members.reduce((s, p) => s + (p.kills ?? 0), 0), [members]);
+
+  useEffect(() => {
+    if (!myTeam || members.length === 0) { setPoints(0); return; }
+    const ids = members.map((m) => m.user_id);
+    supabase
+      .from("eliminations")
+      .select("points_awarded")
+      .eq("game_id", gameId)
+      .in("eliminator_id", ids)
+      .then(({ data }) => {
+        const sum = (data ?? []).reduce((s: number, r: any) => s + (r.points_awarded ?? 0), 0);
+        setPoints(sum);
+      });
+  }, [myTeam, members, gameId]);
 
   const leave = async () => {
     if (!myPlayerId) return;
@@ -629,64 +711,86 @@ function TeamSection({ gameId, meId, myPlayerId, myTeamId }: { gameId: string; m
     if (error) toast.error(error.message); else toast.success("Left team");
   };
 
-  return (
-    <div className="space-y-5">
-      <div className="bg-surface border border-border rounded-2xl p-4">
-        <h3 className="font-display font-extrabold text-base mb-3">Create a team</h3>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Team name"
-          maxLength={40}
-          className="w-full bg-card border border-border rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary"
-        />
-        <div className="mt-3">
-          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">Team color</p>
-          <div className="flex flex-wrap gap-2">
-            {TEAM_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                aria-label={`color ${c}`}
-                className={`h-8 w-8 rounded-full border-2 transition ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
-                style={{ background: c }}
-              />
-            ))}
-          </div>
-        </div>
-        <button
-          disabled={busy || !name.trim()}
-          onClick={create}
-          className="mt-4 w-full bg-primary text-primary-foreground font-display font-bold py-2.5 rounded-xl disabled:opacity-50 active:scale-[0.98] transition"
-        >
-          {busy ? "Creating…" : "Create team"}
-        </button>
-      </div>
+  const join = async (teamId: string) => {
+    if (!myPlayerId) return;
+    const team = teams.find((t) => t.id === teamId);
+    const count = players.filter((p) => p.team_id === teamId).length;
+    if (team && count >= team.max_members) { toast.error("Team is full"); return; }
+    const { error } = await supabase.from("players").update({ team_id: teamId }).eq("id", myPlayerId);
+    if (error) toast.error(error.message); else toast.success(`Joined ${team?.name ?? "team"}`);
+  };
 
-      <div>
-        <h3 className="font-display font-extrabold text-base mb-3">Teams in this game</h3>
-        {teams.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No teams yet. Be the first to create one.</p>
-        ) : (
+  if (!myTeam) {
+    return (
+      <div className="space-y-4">
+        <div className="bg-surface border border-border rounded-2xl p-4 text-center">
+          <p className="font-display font-bold">You're not on a team</p>
+          <p className="text-sm text-muted-foreground mt-1">Create one from the <span className="font-semibold text-foreground">Players</span> tab, or join one below.</p>
+        </div>
+        {teams.length > 0 && (
           <ul className="space-y-2">
             {teams.map((t) => {
-              const mine = t.id === myTeamId;
+              const count = players.filter((p) => p.team_id === t.id).length;
+              const full = count >= t.max_members;
               return (
                 <li key={t.id} className="flex items-center gap-3 bg-surface border border-border rounded-xl p-3">
                   <span className="h-6 w-6 rounded-full shrink-0 border border-border" style={{ background: t.color }} />
-                  <span className="font-semibold text-sm flex-1 truncate">{t.name}</span>
-                  {mine ? (
-                    <button onClick={leave} className="text-xs font-bold px-3 py-1.5 rounded-full bg-muted text-foreground/80">Leave</button>
-                  ) : (
-                    <button onClick={() => join(t.id)} className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground">Join</button>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate">{t.name}</p>
+                    <p className="text-[11px] text-muted-foreground">{count} / {t.max_members} members</p>
+                  </div>
+                  <button onClick={() => join(t.id)} disabled={full} className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground disabled:opacity-50">
+                    {full ? "Full" : "Join"}
+                  </button>
                 </li>
               );
             })}
           </ul>
         )}
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-surface border border-border rounded-2xl p-5">
+        <div className="flex items-center gap-3">
+          <span className="h-10 w-10 rounded-full border-2 border-border shrink-0" style={{ background: myTeam.color }} />
+          <div className="flex-1 min-w-0">
+            <p className="font-display font-extrabold text-lg truncate">{myTeam.name}</p>
+            <p className="text-xs text-muted-foreground">{members.length} / {myTeam.max_members} members</p>
+          </div>
+          <button onClick={leave} className="text-xs font-bold px-3 py-1.5 rounded-full bg-muted text-foreground/80">Leave</button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-card border border-border px-3 py-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Team kills</p>
+            <p className="text-xl font-display font-extrabold mt-0.5">{totalKills}</p>
+          </div>
+          <div className="rounded-xl bg-card border border-border px-3 py-3 text-center">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Team points</p>
+            <p className="text-xl font-display font-extrabold mt-0.5">{points}</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-display font-extrabold text-base mb-3">Members</h3>
+        <div className="grid grid-cols-4 gap-3">
+          {members.map((p) => {
+            const prof = profilesById[p.user_id];
+            return (
+              <div key={p.id} className="flex flex-col items-center gap-1.5">
+                <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={p.user_id === meId ? "primary" : "none"} />
+                <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
+                <span className="text-[10px] text-muted-foreground">{p.kills} kills</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
+
