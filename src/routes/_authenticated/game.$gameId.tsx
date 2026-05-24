@@ -289,10 +289,10 @@ function GameScreen() {
             <ActivitySection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
           {tab === "Players" && (
-            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
+            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} teams={teams} gameId={gameId} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
           )}
           {tab === "Team" && (
-            <TeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
+            <MyTeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} teams={teams} players={players} profilesById={profilesById} />
           )}
           {tab === "Powerups" && (
             <EmptyHint title="No powerups" body="Power-ups and gear will show up here." />
