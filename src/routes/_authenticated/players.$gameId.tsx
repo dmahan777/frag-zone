@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/players/$gameId")({
 
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; display_name: string | null; photo_url: string | null };
-type Filter = "All" | "Active" | "Targets" | "Bounties";
+type Filter = "All" | "Active";
 
 function PlayersScreen() {
   const { gameId } = Route.useParams();
@@ -46,8 +46,6 @@ function PlayersScreen() {
   const filtered = useMemo(() => {
     let list = players;
     if (filter === "Active") list = list.filter((p) => p.status === "active");
-    else if (filter === "Targets") list = me ? list.filter((p) => p.id === me.target_id) : [];
-    else if (filter === "Bounties") list = list.filter((p) => (p.kills ?? 0) >= 3);
     if (q.trim()) {
       const s = q.toLowerCase();
       list = list.filter((p) => {
@@ -80,11 +78,9 @@ function PlayersScreen() {
   const counts = useMemo(() => ({
     All: players.length,
     Active: players.filter((p) => p.status === "active").length,
-    Targets: me ? players.filter((p) => p.id === me.target_id).length : 0,
-    Bounties: players.filter((p) => (p.kills ?? 0) >= 3).length,
-  }), [players, me]);
+  }), [players]);
 
-  const FILTERS: Filter[] = ["All", "Active", "Targets", "Bounties"];
+  const FILTERS: Filter[] = ["All", "Active"];
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-28">
