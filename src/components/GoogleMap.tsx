@@ -61,13 +61,13 @@ async function toDataUrl(url: string): Promise<string> {
 }
 
 function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
-  // Circular avatar pin with colored ring + pointer tail
   const img = photoDataUrl
-    ? `<image href="${photoDataUrl}" x="6" y="6" width="44" height="44" clip-path="circle(22 at 28 28)" preserveAspectRatio="xMidYMid slice"/>`
+    ? `<image href="${photoDataUrl}" x="6" y="6" width="44" height="44" clip-path="url(#avatarClip)" preserveAspectRatio="xMidYMid slice"/>`
     : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">?</text>`;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="68" viewBox="0 0 56 68">
       <defs>
+        <clipPath id="avatarClip"><circle cx="28" cy="28" r="22"/></clipPath>
         <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/>
         </filter>
