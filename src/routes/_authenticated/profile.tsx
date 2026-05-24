@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 function ProfilePage() {
-  const { user, profile, signOut, refresh } = useAuth() as any;
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
