@@ -18,6 +18,8 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowLocation, setAllowLocation] = useState(true);
+  const [allowNotifications, setAllowNotifications] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -29,6 +31,21 @@ function Login() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        // Location sharing is REQUIRED to create an account
+        if (!allowLocation) {
+          toast.error("Location sharing is required to play. Toggle it on to continue.");
+          return;
+        }
+        try {
+          await requestLocationOnce();
+        } catch (err) {
+          toast.error((err as Error).message);
+          return;
+        }
+        // Notifications are optional
+        if (allowNotifications && typeof Notification !== "undefined" && Notification.permission === "default") {
+          try { await Notification.requestPermission(); } catch {}
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
