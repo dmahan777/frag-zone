@@ -226,8 +226,8 @@ function GameScreen() {
         <div className="h-1 w-12 mx-auto bg-border rounded-full mb-3" />
 
         {/* Tabs row */}
-        <div className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide">
-          <Link to="/profile" className="shrink-0">
+        <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto overflow-y-visible scrollbar-hide">
+          <Link to="/profile" className="shrink-0 p-1">
             <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="danger" />
           </Link>
           {TABS.map((t) => {
