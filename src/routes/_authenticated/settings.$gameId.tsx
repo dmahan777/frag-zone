@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Map as MapIcon, Save, Trash2, Crown } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Trash2, Crown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -15,9 +15,15 @@ type Game = {
   rules: string;
   purge_enabled: boolean;
   purge_interval_minutes: number;
-  map_center_lat: number | null;
-  map_center_lng: number | null;
-  map_radius_m: number | null;
+  max_teams: number;
+  open_registration: boolean;
+  players_per_team: number;
+  elimination_approval: boolean;
+  inherit_targets: boolean;
+  full_team_elimination: boolean;
+  random_purge: boolean;
+  daily_purge_enabled: boolean;
+  daily_purge_time: string | null;
 };
 type PlayerRow = { id: string; user_id: string; status: string; team_id: string | null };
 type TeamRow = { id: string; name: string; color: string; max_members: number; created_by: string };
@@ -36,24 +42,42 @@ function GameSettingsPage() {
   // Editable state
   const [rules, setRules] = useState("");
   const [totalRounds, setTotalRounds] = useState(1);
+
+  // Players & teams
+  const [maxTeams, setMaxTeams] = useState(8);
+  const [openRegistration, setOpenRegistration] = useState(true);
+  const [playersPerTeam, setPlayersPerTeam] = useState(4);
+
+  // Round
+  const [eliminationApproval, setEliminationApproval] = useState(true);
+  const [inheritTargets, setInheritTargets] = useState(true);
+  const [fullTeamElimination, setFullTeamElimination] = useState(false);
+
+  // Purge
   const [purgeEnabled, setPurgeEnabled] = useState(false);
   const [purgeMinutes, setPurgeMinutes] = useState(60);
-  const [mapLat, setMapLat] = useState<string>("");
-  const [mapLng, setMapLng] = useState<string>("");
-  const [mapRadius, setMapRadius] = useState<string>("");
+  const [randomPurge, setRandomPurge] = useState(false);
+  const [dailyPurgeEnabled, setDailyPurgeEnabled] = useState(false);
+  const [dailyPurgeTime, setDailyPurgeTime] = useState<string>("20:00");
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
     if (g) {
-      const gg = g as Game;
+      const gg = g as unknown as Game;
       setGame(gg);
       setRules(gg.rules ?? "");
       setTotalRounds(gg.total_rounds ?? 1);
+      setMaxTeams(gg.max_teams ?? 8);
+      setOpenRegistration(gg.open_registration ?? true);
+      setPlayersPerTeam(gg.players_per_team ?? 4);
+      setEliminationApproval(gg.elimination_approval ?? true);
+      setInheritTargets(gg.inherit_targets ?? true);
+      setFullTeamElimination(gg.full_team_elimination ?? false);
       setPurgeEnabled(!!gg.purge_enabled);
       setPurgeMinutes(gg.purge_interval_minutes ?? 60);
-      setMapLat(gg.map_center_lat != null ? String(gg.map_center_lat) : "");
-      setMapLng(gg.map_center_lng != null ? String(gg.map_center_lng) : "");
-      setMapRadius(gg.map_radius_m != null ? String(gg.map_radius_m) : "");
+      setRandomPurge(!!gg.random_purge);
+      setDailyPurgeEnabled(!!gg.daily_purge_enabled);
+      setDailyPurgeTime((gg.daily_purge_time ?? "20:00:00").slice(0, 5));
     }
     const { data: ps } = await supabase.from("players").select("id, user_id, status, team_id").eq("game_id", gameId);
     const arr = (ps as PlayerRow[]) ?? [];
@@ -97,15 +121,22 @@ function GameSettingsPage() {
 
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase.from("games").update({
+    const payload: Partial<Game> = {
       rules: rules.trim().slice(0, 4000),
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
+      max_teams: Math.max(1, Math.min(64, Math.round(maxTeams))),
+      open_registration: openRegistration,
+      players_per_team: Math.max(1, Math.min(32, Math.round(playersPerTeam))),
+      elimination_approval: eliminationApproval,
+      inherit_targets: inheritTargets,
+      full_team_elimination: fullTeamElimination,
       purge_enabled: purgeEnabled,
       purge_interval_minutes: Math.max(5, Math.min(1440, Math.round(purgeMinutes))),
-      map_center_lat: mapLat ? Number(mapLat) : null,
-      map_center_lng: mapLng ? Number(mapLng) : null,
-      map_radius_m: mapRadius ? Math.max(50, Math.round(Number(mapRadius))) : null,
-    }).eq("id", game.id);
+      random_purge: randomPurge,
+      daily_purge_enabled: dailyPurgeEnabled,
+      daily_purge_time: dailyPurgeEnabled ? `${dailyPurgeTime}:00` : null,
+    };
+    const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
@@ -121,18 +152,6 @@ function GameSettingsPage() {
     await supabase.from("players").update({ team_id: null }).eq("game_id", gameId).eq("team_id", t.id);
     const { error } = await supabase.from("teams").delete().eq("id", t.id);
     if (error) toast.error(error.message); else toast.success("Team deleted");
-  };
-
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { toast.error("Geolocation unavailable"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setMapLat(pos.coords.latitude.toFixed(6));
-        setMapLng(pos.coords.longitude.toFixed(6));
-      },
-      () => toast.error("Couldn't get location"),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
   };
 
   return (
@@ -166,8 +185,13 @@ function GameSettingsPage() {
 
       {/* Players & teams */}
       <Section icon={<Users className="h-4 w-4" />} title="Players & teams" subtitle={`${players.length} players · ${teams.length} teams`}>
+        <Toggle label="Open registration" hint="Allow new players to join with the game code." checked={openRegistration} onChange={setOpenRegistration} />
+
+        <SliderRow className="mt-3" label="Max teams" value={maxTeams} min={1} max={32} onChange={setMaxTeams} suffix="teams" />
+        <SliderRow className="mt-3" label="Players per team" value={playersPerTeam} min={1} max={16} onChange={setPlayersPerTeam} suffix="players" />
+
         {teams.length > 0 && (
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mt-4">
             {teams.map((t) => {
               const count = players.filter((p) => p.team_id === t.id).length;
               return (
@@ -175,7 +199,7 @@ function GameSettingsPage() {
                   <span className="h-6 w-6 rounded-full border border-border shrink-0" style={{ background: t.color }} />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{t.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{count} / {t.max_members} members</p>
+                    <p className="text-[11px] text-muted-foreground">{count} / {playersPerTeam} members</p>
                   </div>
                   <button onClick={() => deleteTeam(t)} className="h-8 w-8 rounded-lg bg-danger/10 border border-danger/30 text-danger flex items-center justify-center">
                     <Trash2 className="h-3.5 w-3.5" />
@@ -185,7 +209,7 @@ function GameSettingsPage() {
             })}
           </div>
         )}
-        <div className="space-y-2">
+        <div className="space-y-2 mt-2">
           {players.map((p) => {
             const prof = profiles[p.user_id];
             const team = teams.find((t) => t.id === p.team_id);
@@ -210,50 +234,55 @@ function GameSettingsPage() {
       </Section>
 
       {/* Round settings */}
-      <Section icon={<Timer className="h-4 w-4" />} title="Round settings" subtitle="How many rounds the game runs for.">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Total rounds</p>
-          <span className="text-2xl font-display font-extrabold tabular-nums">{totalRounds}</span>
-        </div>
-        <input
-          type="range" min={1} max={20} step={1}
-          value={totalRounds}
-          onChange={(e) => setTotalRounds(parseInt(e.target.value))}
-          className="w-full mt-2 accent-primary"
-        />
+      <Section icon={<Timer className="h-4 w-4" />} title="Round settings" subtitle="Rules for how eliminations and rounds flow.">
+        <SliderRow label="Total rounds" value={totalRounds} min={1} max={20} onChange={setTotalRounds} suffix="rounds" />
         <p className="text-[11px] text-muted-foreground mt-1">Currently on round {game.current_round || 0}.</p>
-      </Section>
 
-      {/* Purge settings */}
-      <Section icon={<Skull className="h-4 w-4" />} title="Purge settings" subtitle="Time-window where everyone is fair game.">
-        <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3">
-          <span className="text-sm font-semibold">Enable purge</span>
-          <input type="checkbox" checked={purgeEnabled} onChange={(e) => setPurgeEnabled(e.target.checked)} className="h-5 w-9 accent-primary" />
-        </label>
-        <div className={`mt-3 ${purgeEnabled ? "" : "opacity-50 pointer-events-none"}`}>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Purge every</p>
-            <span className="text-sm font-bold tabular-nums">{purgeMinutes} min</span>
-          </div>
-          <input
-            type="range" min={5} max={240} step={5}
-            value={purgeMinutes}
-            onChange={(e) => setPurgeMinutes(parseInt(e.target.value))}
-            className="w-full mt-1 accent-primary"
+        <div className="mt-4 space-y-2">
+          <Toggle label="Elimination approval" hint="Host must approve each elimination before it counts." checked={eliminationApproval} onChange={setEliminationApproval} />
+          <Toggle label="Inherit targets" hint="When you eliminate someone, you inherit their target." checked={inheritTargets} onChange={setInheritTargets} />
+          <Toggle
+            label="Full team elimination"
+            hint="A whole team has to be eliminated in one round. If even one survives, the rest come back in (and may earn a bonus)."
+            checked={fullTeamElimination}
+            onChange={setFullTeamElimination}
           />
         </div>
       </Section>
 
-      {/* Map settings */}
-      <Section icon={<MapIcon className="h-4 w-4" />} title="Map settings" subtitle="Where the game is played and how big the play area is.">
-        <div className="grid grid-cols-2 gap-2">
-          <LabeledInput label="Center lat" value={mapLat} onChange={setMapLat} placeholder="25.7617" />
-          <LabeledInput label="Center lng" value={mapLng} onChange={setMapLng} placeholder="-80.1918" />
+      {/* Purge settings */}
+      <Section icon={<Skull className="h-4 w-4" />} title="Purge settings" subtitle="Time-windows where everyone is fair game.">
+        <Toggle label="Enable purge" hint="Turn purges on for this game." checked={purgeEnabled} onChange={setPurgeEnabled} />
+
+        <div className={`mt-3 ${purgeEnabled ? "" : "opacity-50 pointer-events-none"}`}>
+          <SliderRow label="Purge every" value={purgeMinutes} min={5} max={240} step={5} onChange={setPurgeMinutes} suffix="min" />
+
+          <div className="mt-4 space-y-2">
+            <Toggle
+              label="Random purge"
+              hint="A purge can also kick off at a random time during a round."
+              checked={randomPurge}
+              onChange={setRandomPurge}
+            />
+            <Toggle
+              label="Daily purge"
+              hint="A purge happens every day at the same time."
+              checked={dailyPurgeEnabled}
+              onChange={setDailyPurgeEnabled}
+            />
+            {dailyPurgeEnabled && (
+              <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3">
+                <span className="text-sm font-semibold">Daily purge time</span>
+                <input
+                  type="time"
+                  value={dailyPurgeTime}
+                  onChange={(e) => setDailyPurgeTime(e.target.value)}
+                  className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
+                />
+              </label>
+            )}
+          </div>
         </div>
-        <LabeledInput className="mt-2" label="Play radius (m)" value={mapRadius} onChange={setMapRadius} placeholder="2000" />
-        <button onClick={useMyLocation} className="mt-3 w-full bg-card border border-border rounded-xl py-2.5 text-sm font-semibold">
-          Use my current location
-        </button>
       </Section>
     </div>
   );
@@ -274,17 +303,31 @@ function Section({ icon, title, subtitle, children }: { icon: React.ReactNode; t
   );
 }
 
-function LabeledInput({ label, value, onChange, placeholder, className }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
+function Toggle({ label, hint, checked, onChange }: { label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className={`block ${className ?? ""}`}>
-      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        inputMode="decimal"
-        className="mt-1 w-full bg-card border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
-      />
+    <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3 cursor-pointer">
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{label}</span>
+        {hint && <span className="block text-[11px] text-muted-foreground mt-0.5">{hint}</span>}
+      </span>
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-5 w-9 accent-primary shrink-0" />
     </label>
+  );
+}
+
+function SliderRow({ label, value, min, max, step = 1, onChange, suffix, className }: { label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; suffix?: string; className?: string }) {
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">{label}</p>
+        <span className="text-sm font-bold tabular-nums">{value}{suffix ? ` ${suffix}` : ""}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} step={step}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value))}
+        className="w-full mt-1 accent-primary"
+      />
+    </div>
   );
 }
