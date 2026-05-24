@@ -88,7 +88,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams, playersPerTeam }:
   );
 }
 
-export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, players, profilesById }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; players: PlayerLite[]; profilesById: Record<string, ProfileLite> }) {
+export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, players, profilesById, playersPerTeam }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; players: PlayerLite[]; profilesById: Record<string, ProfileLite>; playersPerTeam: number }) {
   const [points, setPoints] = useState(0);
   const myTeam = useMemo(() => teams.find((t) => t.id === myTeamId) ?? null, [teams, myTeamId]);
   const members = useMemo(() => players.filter((p) => p.team_id === myTeamId), [players, myTeamId]);
