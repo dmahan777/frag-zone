@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Map, Crosshair, Trophy, User } from "lucide-react";
+import { Home, Map, Video, Users, User } from "lucide-react";
 
 type Tab = { to: string; label: string; icon: typeof Home; center?: boolean };
 const tabs: Tab[] = [
   { to: "/home", label: "Home", icon: Home },
   { to: "/map", label: "Map", icon: Map },
-  { to: "/target", label: "Target", icon: Crosshair, center: true },
-  { to: "/leaderboard", label: "Board", icon: Trophy },
+  { to: "/clips", label: "Clips", icon: Video, center: true },
+  { to: "/players", label: "Players", icon: Users },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
