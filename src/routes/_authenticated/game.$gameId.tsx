@@ -187,7 +187,7 @@ function GameScreen() {
 
         {/* Top-left floating controls */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-          <FloatBtn onClick={() => isHost && navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}>
+          <FloatBtn onClick={() => isHost && navigate({ to: "/settings/$gameId", params: { gameId: game.id } })}>
             <Settings className="h-5 w-5 text-primary" />
           </FloatBtn>
           <FloatBtn onClick={() => setTab("Players")}>
