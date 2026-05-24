@@ -62,23 +62,34 @@ function GameScreen() {
     // eslint-disable-next-line
   }, [gameId]);
 
+  // Load all player locations for this game + subscribe to live updates
   useEffect(() => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported on this device");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (err) => toast.error(`Location error: ${err.message}`),
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 10_000 }
-    );
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 15_000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    let active = true;
+    const loadLocs = async () => {
+      const { data } = await supabase
+        .from("player_locations")
+        .select("user_id, lat, lng")
+        .eq("game_id", gameId);
+      if (!active) return;
+      const map: Record<string, { lat: number; lng: number }> = {};
+      (data ?? []).forEach((r: any) => { map[r.user_id] = { lat: r.lat, lng: r.lng }; });
+      setLocations(map);
+    };
+    loadLocs();
+    const ch = supabase.channel(`locs-${gameId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "player_locations", filter: `game_id=eq.${gameId}` }, (payload: any) => {
+        const row = (payload.new ?? payload.old) as any;
+        if (!row) return;
+        setLocations((prev) => {
+          const next = { ...prev };
+          if (payload.eventType === "DELETE") delete next[row.user_id];
+          else next[row.user_id] = { lat: row.lat, lng: row.lng };
+          return next;
+        });
+      })
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(ch); };
+  }, [gameId]);
 
   const targets = useMemo(() => {
     if (!me?.target_id) return [] as PlayerRow[];
