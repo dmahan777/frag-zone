@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleMap } from "@/components/GoogleMap";
 import { Avatar } from "@/components/Avatar";
-import { Bell, Settings, Users as UsersIcon, Share2, Sparkles } from "lucide-react";
+import { Bell, Settings, Users as UsersIcon, Share2, Shield, Search, ChevronLeft } from "lucide-react";
 import { formatCountdown } from "@/lib/game-utils";
 import { toast } from "sonner";
 
@@ -12,12 +12,14 @@ export const Route = createFileRoute("/_authenticated/game/$gameId")({
   component: GameScreen,
 });
 
-type Tab = "Activity" | "Players" | "Team" | "Items" | "Admin";
-const TABS: Tab[] = ["Activity", "Players", "Team", "Items", "Admin"];
+type Tab = "Activity" | "Players" | "Team" | "Powerups" | "Admin";
+const TABS: Tab[] = ["Activity", "Players", "Team", "Powerups", "Admin"];
 
 type GameRow = { id: string; name: string; code: string; status: string; host_id: string; current_round: number; total_rounds: number; round_ends_at: string | null };
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
+
+type PlayerFilter = "All" | "Active" | "Targets" | "Bounties";
 
 function GameScreen() {
   const { gameId } = Route.useParams();
@@ -58,7 +60,6 @@ function GameScreen() {
     // eslint-disable-next-line
   }, [gameId]);
 
-  // Get the current user's geolocation (best-effort) so the map has something real to show
   useEffect(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -68,26 +69,11 @@ function GameScreen() {
     );
   }, []);
 
-  // Build map markers: me + my targets (placeholder offsets when no real location-share yet)
   const targets = useMemo(() => {
     if (!me?.target_id) return [] as PlayerRow[];
-    // Targets = chain follow if needed; for now show only direct target + any teammates
     const direct = players.find((p) => p.user_id === me.target_id);
     return direct ? [direct] : [];
   }, [me, players]);
-
-  const myTargetsList = useMemo(() => {
-    // Show up to 3 "targets" — direct target + a couple of nearby live players as preview
-    const list: PlayerRow[] = [];
-    if (me?.target_id) {
-      const d = players.find((p) => p.user_id === me.target_id);
-      if (d) list.push(d);
-    }
-    players.filter((p) => p.user_id !== user?.id && p.status === "active" && !list.includes(p))
-      .slice(0, 3 - list.length)
-      .forEach((p) => list.push(p));
-    return list;
-  }, [me, players, user?.id]);
 
   const center = myPos ?? { lat: 25.768, lng: -80.135 };
   const markers = useMemo(() => {
@@ -99,10 +85,9 @@ function GameScreen() {
         lng: myPos.lng,
         label: profile?.username ?? "You",
         photoUrl: profile?.photo_url ?? null,
-        ringColor: "#22c55e",
+        ringColor: "#ffffff",
       });
     }
-    // Scatter targets around the center as placeholder positions (no real share yet)
     targets.forEach((t, i) => {
       const p = profilesById[t.user_id];
       const offset = 0.0015 * (i + 1);
@@ -137,56 +122,54 @@ function GameScreen() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Map area */}
-      <div className="relative w-full h-[58vh] min-h-[380px]">
+      <div className="relative w-full h-[52vh] min-h-[360px]">
         <GoogleMap markers={markers} center={center} className="absolute inset-0" />
 
         {/* Top-left floating controls */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
-          <button onClick={() => isHost && navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}
-            className="h-11 w-11 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition">
-            <Settings className="h-5 w-5 text-foreground" />
-          </button>
-          <button onClick={() => setTab("Players")}
-            className="h-11 w-11 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition">
-            <UsersIcon className="h-5 w-5 text-foreground" />
-          </button>
+          <FloatBtn onClick={() => isHost && navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}>
+            <Settings className="h-5 w-5 text-primary" />
+          </FloatBtn>
+          <FloatBtn onClick={() => setTab("Players")}>
+            <UsersIcon className="h-5 w-5 text-secondary" />
+          </FloatBtn>
         </div>
 
         {/* Top-center game pill */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
           <button onClick={() => navigate({ to: "/home" })}
-            className="bg-white shadow-md rounded-full px-4 py-2 max-w-[60vw] flex items-center gap-1 active:scale-95 transition">
-            <span className="font-semibold text-sm truncate">{game.name}</span>
-            <span className="text-muted-foreground text-xs">▾</span>
+            className="bg-white shadow-md rounded-full px-4 py-2 max-w-[60vw] flex items-center gap-1.5 active:scale-95 transition">
+            <span className="font-semibold text-sm text-foreground/90 truncate" style={{ color: "#0A0C12" }}>{game.name}</span>
+            <span className="text-primary text-xs">▾</span>
           </button>
         </div>
 
         {/* Top-right */}
         <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
-          <button className="h-11 w-11 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition">
-            <Bell className="h-5 w-5 text-foreground" />
-          </button>
-          <button className="h-11 w-11 rounded-full bg-white shadow-md flex items-center justify-center active:scale-95 transition">
-            <Sparkles className="h-5 w-5 text-amber-500" />
-          </button>
+          <FloatBtn>
+            <Bell className="h-5 w-5 text-primary" />
+          </FloatBtn>
+          <FloatBtn>
+            <Shield className="h-5 w-5 text-secondary" />
+          </FloatBtn>
         </div>
 
         {/* Points pill bottom-right */}
         <div className="absolute bottom-3 right-3 z-10">
-          <div className="bg-white shadow-md rounded-full px-4 py-2 text-sm font-semibold">
+          <div className="bg-white shadow-md rounded-full px-4 py-2 text-sm font-semibold" style={{ color: "#0A0C12" }}>
             {me?.kills ?? 0} pts
           </div>
         </div>
       </div>
 
       {/* Sheet area */}
-      <div className="flex-1 -mt-4 relative z-20 bg-surface rounded-t-3xl border-t border-border pt-2 pb-28 shadow-[0_-8px_24px_rgba(0,0,0,0.08)]">
+      <div className="flex-1 -mt-5 relative z-20 bg-surface rounded-t-3xl border-t border-border pt-2 pb-28">
         <div className="h-1 w-12 mx-auto bg-border rounded-full mb-3" />
 
         {/* Tabs row */}
         <div className="flex items-center gap-2 px-4 overflow-x-auto scrollbar-hide">
           <Link to="/profile" className="shrink-0">
-            <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="primary" />
+            <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="danger" />
           </Link>
           {TABS.map((t) => {
             const active = t === tab;
@@ -196,8 +179,10 @@ function GameScreen() {
               <button key={t} onClick={() => setTab(t)}
                 className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition
                   ${active
-                    ? "border-primary text-primary bg-primary/5"
-                    : "border-border text-foreground/80 bg-card"}`}>
+                    ? "border-transparent text-foreground bg-transparent"
+                    : "border-border text-foreground/70 bg-transparent"}`}
+                style={active ? { background: "linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(90deg, #FF5FA0, #00E5FF, #4D8FFF) border-box", border: "1.5px solid transparent" } : undefined}
+              >
                 {t}
               </button>
             );
@@ -212,13 +197,13 @@ function GameScreen() {
             <StatCell label="Time Left" value={formatCountdown(game.round_ends_at)} />
             <Divider />
             <StatCell label="Game Code" value={game.code} trailing={
-              <button onClick={onShare} className="ml-1 h-7 w-7 rounded-md bg-primary/10 text-primary flex items-center justify-center">
+              <button onClick={onShare} className="ml-1 h-7 w-7 rounded-full bg-primary/15 text-primary flex items-center justify-center">
                 <Share2 className="h-3.5 w-3.5" />
               </button>
             } />
             <Divider />
             <StatCell label="Team" value="" trailing={
-              <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center">
+              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
                 <UsersIcon className="h-4 w-4 text-foreground/70" />
               </div>
             } />
@@ -227,17 +212,15 @@ function GameScreen() {
 
         {/* Tab body */}
         <div className="px-4 mt-4">
-          {tab === "Activity" && (
-            <ActivitySection myTargets={myTargetsList} profilesById={profilesById} />
-          )}
+          {tab === "Activity" && <ActivitySection />}
           {tab === "Players" && (
-            <PlayersSection players={players} profilesById={profilesById} />
+            <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
           {tab === "Team" && (
             <EmptyHint title="No team yet" body="Join or create a team to coordinate with friends." />
           )}
-          {tab === "Items" && (
-            <EmptyHint title="No items" body="Power-ups and gear will show up here." />
+          {tab === "Powerups" && (
+            <EmptyHint title="No powerups" body="Power-ups and gear will show up here." />
           )}
           {tab === "Admin" && isHost && (
             <button onClick={() => navigate({ to: "/admin/$gameId", params: { gameId: game.id } })}
@@ -248,6 +231,15 @@ function GameScreen() {
         </div>
       </div>
     </div>
+  );
+}
+
+function FloatBtn({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <button onClick={onClick}
+      className="h-11 w-11 rounded-full bg-card border border-border shadow-card flex items-center justify-center active:scale-95 transition">
+      {children}
+    </button>
   );
 }
 
@@ -265,45 +257,119 @@ function StatCell({ label, value, trailing }: { label: string; value: string; tr
 
 function Divider() { return <div className="w-px bg-border" />; }
 
-function ActivitySection({ myTargets, profilesById }: { myTargets: PlayerRow[]; profilesById: Record<string, ProfileLite> }) {
+function ActivitySection() {
   return (
-    <div>
-      <h3 className="text-sm text-muted-foreground mb-3">My Targets</h3>
-      {myTargets.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">No active targets yet.</p>
-      ) : (
-        <div className="flex items-start gap-5">
-          {myTargets.map((t) => {
-            const p = profilesById[t.user_id];
-            return (
-              <Link key={t.id} to="/target" className="flex flex-col items-center gap-1.5 active:scale-95 transition">
-                <Avatar name={p?.username} url={p?.photo_url} size={64} ring="danger" />
-                <span className="text-sm font-medium">{p?.username ?? "Player"}</span>
-                <div className="h-3 w-8 bg-success rounded-sm" />
-              </Link>
-            );
-          })}
+    <div className="space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
+        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
+          <span className="text-primary-foreground font-display font-extrabold text-xs">S</span>
         </div>
-      )}
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-sm">Splashin Team</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Keep your friends close and your floaties closer 🐱</p>
+        </div>
+      </div>
+      <div className="text-center pt-4">
+        <button className="text-sm text-muted-foreground underline underline-offset-4">Need help?</button>
+      </div>
     </div>
   );
 }
 
-function PlayersSection({ players, profilesById }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite> }) {
-  return (
-    <div className="space-y-2">
-      {players.map((p) => {
+function PlayersSection({ players, profilesById, meId, meTargetId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null }) {
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState<PlayerFilter>("All");
+
+  const counts = useMemo(() => ({
+    All: players.length,
+    Active: players.filter((p) => p.status === "active").length,
+    Targets: meTargetId ? 1 : 0,
+    Bounties: 0,
+  }), [players, meTargetId]);
+
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    let arr = players;
+    if (filter === "Active") arr = arr.filter((p) => p.status === "active");
+    if (filter === "Targets") arr = arr.filter((p) => p.user_id === meTargetId);
+    if (filter === "Bounties") arr = [];
+    if (needle) {
+      arr = arr.filter((p) => {
         const prof = profilesById[p.user_id];
-        return (
-          <div key={p.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl p-2.5">
-            <Avatar name={prof?.username} url={prof?.photo_url} size={40} />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">@{prof?.username ?? "player"}</p>
-              <p className="text-xs text-muted-foreground">{p.status} · {p.kills} kills</p>
+        return [prof?.username, p.team_id].filter(Boolean).some((s) => (s as string).toLowerCase().includes(needle));
+      });
+    }
+    return arr;
+  }, [players, profilesById, filter, q, meTargetId]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, PlayerRow[]>();
+    for (const p of filtered) {
+      const key = p.team_id ?? "Free agents";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    return Array.from(map.entries());
+  }, [filtered]);
+
+  const ringFor = (p: PlayerRow): "primary" | "danger" | "success" | "none" => {
+    if (p.user_id === meTargetId) return "danger";
+    if (p.status !== "active") return "danger";
+    return "none";
+  };
+
+  return (
+    <div>
+      {/* Search */}
+      <div className="relative">
+        <ChevronLeft className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute right-12 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0" />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search by player or team"
+          className="w-full bg-muted/60 rounded-full pl-10 pr-12 py-3 text-sm placeholder:text-muted-foreground focus:outline-none"
+        />
+        <button className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full flex items-center justify-center">
+          <UsersIcon className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Filter pills */}
+      <div className="mt-3 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+        {(["All", "Active", "Targets", "Bounties"] as PlayerFilter[]).map((f) => {
+          const active = f === filter;
+          return (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition
+                ${active ? "bg-secondary text-secondary-foreground" : "bg-muted text-foreground/80"}`}>
+              {f} {counts[f]}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Groups */}
+      <div className="mt-5 space-y-6">
+        {grouped.length === 0 && <p className="text-center text-sm text-muted-foreground py-12">No players match.</p>}
+        {grouped.map(([teamName, members]) => (
+          <div key={teamName}>
+            <h3 className="font-display font-extrabold text-lg mb-3">{teamName}</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {members.map((p) => {
+                const prof = profilesById[p.user_id];
+                const ring = ringFor(p);
+                return (
+                  <div key={p.id} className="flex flex-col items-center gap-1.5">
+                    <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
+                    <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
