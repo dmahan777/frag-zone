@@ -301,6 +301,17 @@ function GameSettingsPage() {
                 <p className="text-[11px] opacity-80 mt-1">Stop the game for everyone.</p>
               </div>
             </button>
+            <button
+              disabled={busy}
+              onClick={deleteGame}
+              className="w-full flex items-center gap-3 bg-danger/10 border border-danger text-danger rounded-2xl p-4 text-left disabled:opacity-50"
+            >
+              <span className="h-10 w-10 rounded-full bg-danger/20 flex items-center justify-center shrink-0"><Trash2 className="h-4 w-4" /></span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-base font-extrabold leading-none">Delete game</p>
+                <p className="text-[11px] opacity-80 mt-1">Permanently remove this game and all its data.</p>
+              </div>
+            </button>
           </div>
         </>
       )}
