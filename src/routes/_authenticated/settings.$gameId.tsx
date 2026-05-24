@@ -168,6 +168,10 @@ function GameSettingsPage() {
       powerup_radar_ping: puRadar,
       powerup_double_points: puDouble,
       powerup_revive_token: puRevive,
+      powerup_map_spawn: puMapSpawn,
+      powerup_spawn_radius_m: Math.max(50, Math.min(20000, Math.round(puSpawnRadius))),
+      powerup_spawn_frequency: puSpawnFreq,
+      powerup_spawn_count: Math.max(1, Math.min(50, Math.round(puSpawnCount))),
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
