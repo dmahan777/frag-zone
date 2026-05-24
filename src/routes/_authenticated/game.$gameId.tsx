@@ -69,11 +69,11 @@ function GameScreen() {
     const loadLocs = async () => {
       const { data } = await supabase
         .from("player_locations")
-        .select("user_id, lat, lng")
+        .select("user_id, lat, lng, speed, battery, updated_at")
         .eq("game_id", gameId);
       if (!active) return;
-      const map: Record<string, { lat: number; lng: number }> = {};
-      (data ?? []).forEach((r: any) => { map[r.user_id] = { lat: r.lat, lng: r.lng }; });
+      const map: Record<string, { lat: number; lng: number; speed?: number | null; battery?: number | null; updated_at?: string }> = {};
+      (data ?? []).forEach((r: any) => { map[r.user_id] = { lat: r.lat, lng: r.lng, speed: r.speed, battery: r.battery, updated_at: r.updated_at }; });
       setLocations(map);
     };
     loadLocs();
@@ -84,7 +84,7 @@ function GameScreen() {
         setLocations((prev) => {
           const next = { ...prev };
           if (payload.eventType === "DELETE") delete next[row.user_id];
-          else next[row.user_id] = { lat: row.lat, lng: row.lng };
+          else next[row.user_id] = { lat: row.lat, lng: row.lng, speed: row.speed, battery: row.battery, updated_at: row.updated_at };
           return next;
         });
       })
