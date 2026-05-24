@@ -46,8 +46,6 @@ function PlayersScreen() {
   const filtered = useMemo(() => {
     let list = players;
     if (filter === "Active") list = list.filter((p) => p.status === "active");
-    else if (filter === "Targets") list = me ? list.filter((p) => p.id === me.target_id) : [];
-    else if (filter === "Bounties") list = list.filter((p) => (p.kills ?? 0) >= 3);
     if (q.trim()) {
       const s = q.toLowerCase();
       list = list.filter((p) => {
