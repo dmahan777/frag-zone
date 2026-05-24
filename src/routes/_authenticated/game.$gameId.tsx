@@ -8,6 +8,7 @@ import { Bell, Settings, Users as UsersIcon, Share2, Shield, Search, ChevronLeft
 import { formatCountdown } from "@/lib/game-utils";
 import { useLiveLocation } from "@/hooks/use-live-location";
 import { toast } from "sonner";
+import { reverseGeocodeCity } from "@/lib/geocode.functions";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   component: GameScreen,
