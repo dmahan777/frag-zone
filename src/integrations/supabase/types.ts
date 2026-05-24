@@ -149,7 +149,12 @@ export type Database = {
           name: string
           open_registration: boolean
           players_per_team: number
+          powerup_double_points: boolean
+          powerup_radar_ping: boolean
+          powerup_revive_token: boolean
+          powerup_shield: boolean
           purge_enabled: boolean
+          purge_length_hours: number
           purge_length_minutes: number
           random_purge: boolean
           random_purge_frequency: string
@@ -157,6 +162,7 @@ export type Database = {
           revive_enabled: boolean
           round_ends_at: string | null
           round_length_days: number
+          round_starts_at: string | null
           rules: string
           safe_zones: Json
           status: string
@@ -180,7 +186,12 @@ export type Database = {
           name: string
           open_registration?: boolean
           players_per_team?: number
+          powerup_double_points?: boolean
+          powerup_radar_ping?: boolean
+          powerup_revive_token?: boolean
+          powerup_shield?: boolean
           purge_enabled?: boolean
+          purge_length_hours?: number
           purge_length_minutes?: number
           random_purge?: boolean
           random_purge_frequency?: string
@@ -188,6 +199,7 @@ export type Database = {
           revive_enabled?: boolean
           round_ends_at?: string | null
           round_length_days?: number
+          round_starts_at?: string | null
           rules?: string
           safe_zones?: Json
           status?: string
@@ -211,7 +223,12 @@ export type Database = {
           name?: string
           open_registration?: boolean
           players_per_team?: number
+          powerup_double_points?: boolean
+          powerup_radar_ping?: boolean
+          powerup_revive_token?: boolean
+          powerup_shield?: boolean
           purge_enabled?: boolean
+          purge_length_hours?: number
           purge_length_minutes?: number
           random_purge?: boolean
           random_purge_frequency?: string
@@ -219,6 +236,7 @@ export type Database = {
           revive_enabled?: boolean
           round_ends_at?: string | null
           round_length_days?: number
+          round_starts_at?: string | null
           rules?: string
           safe_zones?: Json
           status?: string
