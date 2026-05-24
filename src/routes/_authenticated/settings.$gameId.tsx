@@ -97,7 +97,7 @@ function GameSettingsPage() {
 
   const save = async () => {
     setBusy(true);
-    const patch: Record<string, unknown> = {
+    const { error } = await supabase.from("games").update({
       rules: rules.trim().slice(0, 4000),
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
       purge_enabled: purgeEnabled,
@@ -105,8 +105,7 @@ function GameSettingsPage() {
       map_center_lat: mapLat ? Number(mapLat) : null,
       map_center_lng: mapLng ? Number(mapLng) : null,
       map_radius_m: mapRadius ? Math.max(50, Math.round(Number(mapRadius))) : null,
-    };
-    const { error } = await supabase.from("games").update(patch).eq("id", game.id);
+    }).eq("id", game.id);
     setBusy(false);
     if (error) toast.error(error.message); else toast.success("Settings saved");
   };
