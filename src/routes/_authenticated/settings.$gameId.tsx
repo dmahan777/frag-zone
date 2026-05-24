@@ -218,7 +218,7 @@ function GameSettingsPage() {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Game deleted");
-    navigate({ to: "/home" });
+    navigate({ to: "/menu" });
   };
 
   const sections: { key: SectionKey; title: string; subtitle: string; icon: React.ReactNode }[] = [
