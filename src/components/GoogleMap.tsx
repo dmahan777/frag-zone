@@ -14,6 +14,8 @@ type Props = {
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
+  onMarkerClick?: (id: string) => void;
+  focusId?: string | null; // pan + zoom to this marker
 };
 
 const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
