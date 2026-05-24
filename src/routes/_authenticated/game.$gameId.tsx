@@ -237,7 +237,9 @@ function GameScreen() {
           tabs={TABS.filter((t) => t !== "Admin" || isHost)}
           className="px-4 mt-4"
         >
-          {tab === "Activity" && <ActivitySection />}
+          {tab === "Activity" && (
+            <ActivitySection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
+          )}
           {tab === "Players" && (
             <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
@@ -310,21 +312,64 @@ function StatCell({ label, value, trailing }: { label: string; value: string; tr
 
 function Divider() { return <div className="w-px bg-border" />; }
 
-function ActivitySection() {
+function ActivitySection({ players, profilesById, meId, meTargetId }: { players: PlayerRow[]; profilesById: Record<string, ProfileLite>; meId: string | null; meTargetId: string | null }) {
+  const targets = useMemo(() => {
+    if (!meTargetId) return [] as PlayerRow[];
+    const t = players.find((p) => p.user_id === meTargetId);
+    return t ? [t] : [];
+  }, [players, meTargetId]);
+
+  const bounties = useMemo(() => {
+    if (!meId) return [] as PlayerRow[];
+    return players.filter((p) => p.target_id === meId);
+  }, [players, meId]);
+
   return (
-    <div className="space-y-4">
-      <div className="bg-card border border-border rounded-2xl p-4 flex items-start gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shrink-0">
-          <span className="text-primary-foreground font-display font-extrabold text-xs">S</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm">Splashin Team</p>
-          <p className="text-sm text-muted-foreground mt-0.5">Keep your friends close and your floaties closer 🐱</p>
-        </div>
+    <div className="space-y-6">
+      <Section title="Targets" subtitle="Eliminate these players." emptyText="No active target.">
+        {targets.map((t) => (
+          <PlayerRowCard key={t.id} player={t} profile={profilesById[t.user_id]} accent="#ef4444" badge="TARGET" />
+        ))}
+      </Section>
+
+      <Section title="Bounties" subtitle="Players hunting you." emptyText="No one is hunting you. Yet.">
+        {bounties.map((b) => (
+          <PlayerRowCard key={b.id} player={b} profile={profilesById[b.user_id]} accent="#f59e0b" badge="BOUNTY" />
+        ))}
+      </Section>
+    </div>
+  );
+}
+
+function Section({ title, subtitle, emptyText, children }: { title: string; subtitle?: string; emptyText: string; children: React.ReactNode }) {
+  const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
+  return (
+    <div>
+      <h3 className="font-display font-extrabold text-lg">{title}</h3>
+      {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
+      <div className="mt-3 space-y-2">
+        {hasChildren ? children : (
+          <div className="bg-card border border-border rounded-2xl p-4 text-center">
+            <p className="text-sm text-muted-foreground">{emptyText}</p>
+          </div>
+        )}
       </div>
-      <div className="text-center pt-4">
-        <button className="text-sm text-muted-foreground underline underline-offset-4">Need help?</button>
+    </div>
+  );
+}
+
+function PlayerRowCard({ player, profile, accent, badge }: { player: PlayerRow; profile?: ProfileLite; accent: string; badge: string }) {
+  return (
+    <div className="bg-card border border-border rounded-2xl p-3 flex items-center gap-3">
+      <div className="relative">
+        <Avatar url={profile?.photo_url} name={profile?.username} size={44} />
+        <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card" style={{ background: accent }} />
       </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate">@{profile?.username ?? "player"}</p>
+        <p className="text-xs text-muted-foreground truncate">{profile?.school ?? "—"} · {player.kills} kills</p>
+      </div>
+      <span className="text-[10px] font-bold tracking-wider px-2 py-1 rounded-full" style={{ background: `${accent}22`, color: accent }}>{badge}</span>
     </div>
   );
 }
