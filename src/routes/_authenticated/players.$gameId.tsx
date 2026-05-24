@@ -20,12 +20,9 @@ function PlayersScreen() {
   const [gameName, setGameName] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
   const [q, setQ] = useState("");
-  const [meId, setMeId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      setMeId(u.user?.id ?? null);
       const { data: g } = await supabase.from("games").select("name").eq("id", gameId).maybeSingle();
       setGameName((g as { name: string } | null)?.name ?? "");
       const { data: ps } = await supabase.from("players").select("id, user_id, status, target_id, kills, team_id").eq("game_id", gameId);
