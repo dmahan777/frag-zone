@@ -97,34 +97,26 @@ function GameScreen() {
     return direct ? [direct] : [];
   }, [me, players]);
 
-  const center = myPos ?? { lat: 25.768, lng: -80.135 };
+  const center = myPos ?? (user && locations[user.id]) ?? { lat: 25.768, lng: -80.135 };
   const markers = useMemo(() => {
     const out: { id: string; lat: number; lng: number; label?: string; photoUrl?: string | null; ringColor?: string }[] = [];
-    if (myPos && user) {
+    players.forEach((pl) => {
+      const loc = pl.user_id === user?.id ? (myPos ?? locations[pl.user_id]) : locations[pl.user_id];
+      if (!loc) return;
+      const prof = profilesById[pl.user_id];
+      const isMe = pl.user_id === user?.id;
+      const isTarget = targets.some((t) => t.user_id === pl.user_id);
       out.push({
-        id: "me",
-        lat: myPos.lat,
-        lng: myPos.lng,
-        label: profile?.username ?? "You",
-        photoUrl: profile?.photo_url ?? null,
-        ringColor: "#ffffff",
-      });
-    }
-    targets.forEach((t, i) => {
-      const p = profilesById[t.user_id];
-      const offset = 0.0015 * (i + 1);
-      const angle = (i / Math.max(targets.length, 1)) * Math.PI * 2;
-      out.push({
-        id: t.id,
-        lat: center.lat + Math.cos(angle) * offset,
-        lng: center.lng + Math.sin(angle) * offset,
-        label: p?.username ?? "Target",
-        photoUrl: p?.photo_url ?? null,
-        ringColor: "#ef4444",
+        id: pl.id,
+        lat: loc.lat,
+        lng: loc.lng,
+        label: isMe ? `${prof?.username ?? "You"} (you)` : prof?.username ?? "Player",
+        photoUrl: prof?.photo_url ?? null,
+        ringColor: isMe ? "#ffffff" : isTarget ? "#ef4444" : "#3b82f6",
       });
     });
     return out;
-  }, [myPos, user, profile, targets, profilesById, center.lat, center.lng]);
+  }, [myPos, user, locations, players, profilesById, targets]);
 
   const isHost = game?.host_id === user?.id;
 
