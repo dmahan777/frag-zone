@@ -152,6 +152,27 @@ function Login() {
               </div>
             </div>
 
+            {!isSignin ? null : (
+              <div className="space-y-2 pt-2">
+                <PermissionToggle
+                  icon={<MapPin className="h-4 w-4" />}
+                  title="Share location"
+                  subtitle="Required — used so other players can find you on the map."
+                  required
+                  checked={allowLocation}
+                  onChange={setAllowLocation}
+                />
+                <PermissionToggle
+                  icon={<Bell className="h-4 w-4" />}
+                  title="Push notifications"
+                  subtitle="Optional — alerts for targets, eliminations, and game updates."
+                  checked={allowNotifications}
+                  onChange={setAllowNotifications}
+                />
+              </div>
+            )}
+
+
             <button
               type="submit"
               disabled={loading}
