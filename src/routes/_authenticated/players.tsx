@@ -92,39 +92,13 @@ function PlayersPage() {
         />
       </div>
 
-      {/* Tabs */}
-      <div className="mt-5 bg-card border border-border rounded-full p-1 flex">
-        <TabBtn active={tab === "players"} onClick={() => setTab("players")} icon={<Users className="h-4 w-4" />} label={`Players · ${rows.length}`} />
-        <TabBtn active={tab === "teams"} onClick={() => setTab("teams")} icon={<Shield className="h-4 w-4" />} label={`Teams · ${teams.length}`} />
-      </div>
-
       {loading && <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
-      {!loading && tab === "players" && (
+      {!loading && (
         <div className="mt-5 space-y-2">
           {filtered.length === 0 && <Empty text="No players yet." />}
           {filtered.map((r, i) => (
             <PlayerRow key={r.id} rank={i + 1} row={r} />
-          ))}
-        </div>
-      )}
-
-      {!loading && tab === "teams" && (
-        <div className="mt-5 space-y-4">
-          {teams.length === 0 && <Empty text="No teams formed yet." />}
-          {teams.map(([teamId, members]) => (
-            <div key={teamId} className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 flex items-center gap-2 border-b border-border">
-                <Shield className="h-4 w-4 text-secondary" />
-                <span className="font-display font-bold tracking-tight">{teamId}</span>
-                <span className="ml-auto text-xs text-muted-foreground">{members.length} members</span>
-              </div>
-              <div className="divide-y divide-border">
-                {members.map((m) => (
-                  <PlayerRow key={m.id} row={m} compact />
-                ))}
-              </div>
-            </div>
           ))}
         </div>
       )}
