@@ -89,7 +89,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
           zoomControl: false,
           clickableIcons: false,
           gestureHandling: "greedy",
-          backgroundColor: "#e5e3df",
+          backgroundColor: "var(--map-fallback)",
         });
         // Trigger a resize once the container has its final size — fixes blank tiles
         // when the map is initialized inside a freshly-mounted flex/absolute parent.
