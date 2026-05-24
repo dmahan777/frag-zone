@@ -21,23 +21,6 @@ const TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_
 
 let loaderPromise: Promise<void> | null = null;
 
-function makeStaticMapUrl(center: { lat: number; lng: number }, zoom: number, markers: MapMarker[]) {
-  if (!BROWSER_KEY) return null;
-  const params = new URLSearchParams({
-    key: BROWSER_KEY,
-    center: `${center.lat},${center.lng}`,
-    zoom: String(zoom),
-    size: "640x640",
-    scale: "2",
-    maptype: "roadmap",
-  });
-  markers.slice(0, 12).forEach((m) => {
-    params.append("markers", `color:red|label:${encodeURIComponent((m.label || "P").slice(0, 1).toUpperCase())}|${m.lat},${m.lng}`);
-  });
-  if (TRACKING_ID) params.set("channel", TRACKING_ID);
-  return `https://maps.googleapis.com/maps/api/staticmap?${params.toString()}`;
-}
-
 function loadMaps(): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
   if ((window as any).google?.maps?.Map) return Promise.resolve();
@@ -92,7 +75,6 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
   const [err, setErr] = useState<string | null>(null);
 
   const fallbackCenter = center ?? { lat: 25.768, lng: -80.135 }; // South Beach default
-  const staticMapUrl = makeStaticMapUrl(fallbackCenter, zoom, markers);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,14 +144,7 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: P
 
   return (
     <div className={`relative h-full w-full overflow-hidden ${className}`}>
-      {staticMapUrl && (
-        <img
-          src={staticMapUrl}
-          alt="Game map"
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-      )}
-      {!staticMapUrl && <div className="absolute inset-0 bg-map-fallback" />}
+      <div className="absolute inset-0 bg-map-fallback" />
       <div ref={ref} className="absolute inset-0 h-full w-full" />
       {err && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/40 text-center p-4">
