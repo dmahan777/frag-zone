@@ -524,3 +524,79 @@ function EmptyHint({ title, body }: { title: string; body: string }) {
     </div>
   );
 }
+
+function PlayerLocationCard({
+  name, isMe, team, photoUrl, lat, lng, speedMph, battery, isLive, ageSec, onClose,
+}: {
+  name: string; isMe: boolean; team: string | null; photoUrl: string | null;
+  lat: number; lng: number; speedMph: number | null; battery: number | null;
+  isLive: boolean; ageSec: number; onClose: () => void;
+}) {
+  const [address, setAddress] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const url = `https://connector-gateway.lovable.dev/google_maps/maps/api/geocode/json?latlng=${lat},${lng}`;
+        const apiKey = import.meta.env.VITE_LOVABLE_API_KEY as string | undefined;
+        const connKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_API_KEY as string | undefined;
+        const headers: Record<string, string> = {};
+        if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
+        if (connKey) headers["X-Connection-Api-Key"] = connKey;
+        const res = await fetch(url, { headers });
+        const json = await res.json();
+        if (cancelled) return;
+        const addr = json?.results?.[0]?.formatted_address as string | undefined;
+        setAddress(addr ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      } catch {
+        if (!cancelled) setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [lat, lng]);
+
+  const directionsHref = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const ageLabel = ageSec < 60 ? "just now" : ageSec < 3600 ? `${Math.round(ageSec / 60)}m ago` : `${Math.round(ageSec / 3600)}h ago`;
+
+  return (
+    <div className="absolute bottom-3 left-3 right-3 z-20 bg-surface border border-border rounded-2xl shadow-xl p-4 text-foreground">
+      <div className="flex items-start gap-3">
+        <Avatar name={name} url={photoUrl} size={48} ring={isMe ? "primary" : "danger"} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-display font-bold truncate">{name}{isMe ? " (you)" : ""}</p>
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${isLive ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
+              {isLive ? "● Live" : "Offline"}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Team: <span className="text-foreground/80">{team ?? "—"}</span> · updated {ageLabel}
+          </p>
+        </div>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-lg leading-none px-1">×</button>
+      </div>
+
+      <p className="text-xs text-foreground/80 mt-3 line-clamp-2">{address ?? "Locating…"}</p>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-card border border-border px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Speed</p>
+          <p className="text-sm font-semibold">{speedMph != null ? `${speedMph.toFixed(1)} mph` : "—"}</p>
+        </div>
+        <div className="rounded-xl bg-card border border-border px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Battery</p>
+          <p className="text-sm font-semibold">{battery != null ? `${Math.round(battery)}%` : "—"}</p>
+        </div>
+      </div>
+
+      <a
+        href={directionsHref}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 block w-full text-center bg-primary text-primary-foreground font-semibold py-2.5 rounded-xl active:scale-[0.98] transition"
+      >
+        Get directions
+      </a>
+    </div>
+  );
+}
