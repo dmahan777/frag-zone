@@ -6,6 +6,7 @@ import { GoogleMap } from "@/components/GoogleMap";
 import { Avatar } from "@/components/Avatar";
 import { Bell, Settings, Users as UsersIcon, Share2, Shield, Search, ChevronLeft } from "lucide-react";
 import { formatCountdown } from "@/lib/game-utils";
+import { useLiveLocation } from "@/hooks/use-live-location";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
@@ -31,7 +32,8 @@ function GameScreen() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
   const [tab, setTab] = useState<Tab>("Activity");
-  const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [locations, setLocations] = useState<Record<string, { lat: number; lng: number }>>({});
+  const myPos = useLiveLocation(gameId, user?.id);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
@@ -60,23 +62,34 @@ function GameScreen() {
     // eslint-disable-next-line
   }, [gameId]);
 
+  // Load all player locations for this game + subscribe to live updates
   useEffect(() => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported on this device");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      (err) => toast.error(`Location error: ${err.message}`),
-      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 10_000 }
-    );
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => setMyPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 15_000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    let active = true;
+    const loadLocs = async () => {
+      const { data } = await supabase
+        .from("player_locations")
+        .select("user_id, lat, lng")
+        .eq("game_id", gameId);
+      if (!active) return;
+      const map: Record<string, { lat: number; lng: number }> = {};
+      (data ?? []).forEach((r: any) => { map[r.user_id] = { lat: r.lat, lng: r.lng }; });
+      setLocations(map);
+    };
+    loadLocs();
+    const ch = supabase.channel(`locs-${gameId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "player_locations", filter: `game_id=eq.${gameId}` }, (payload: any) => {
+        const row = (payload.new ?? payload.old) as any;
+        if (!row) return;
+        setLocations((prev) => {
+          const next = { ...prev };
+          if (payload.eventType === "DELETE") delete next[row.user_id];
+          else next[row.user_id] = { lat: row.lat, lng: row.lng };
+          return next;
+        });
+      })
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(ch); };
+  }, [gameId]);
 
   const targets = useMemo(() => {
     if (!me?.target_id) return [] as PlayerRow[];
@@ -84,34 +97,26 @@ function GameScreen() {
     return direct ? [direct] : [];
   }, [me, players]);
 
-  const center = myPos ?? { lat: 25.768, lng: -80.135 };
+  const center = myPos ?? (user && locations[user.id]) ?? { lat: 25.768, lng: -80.135 };
   const markers = useMemo(() => {
     const out: { id: string; lat: number; lng: number; label?: string; photoUrl?: string | null; ringColor?: string }[] = [];
-    if (myPos && user) {
+    players.forEach((pl) => {
+      const loc = pl.user_id === user?.id ? (myPos ?? locations[pl.user_id]) : locations[pl.user_id];
+      if (!loc) return;
+      const prof = profilesById[pl.user_id];
+      const isMe = pl.user_id === user?.id;
+      const isTarget = targets.some((t) => t.user_id === pl.user_id);
       out.push({
-        id: "me",
-        lat: myPos.lat,
-        lng: myPos.lng,
-        label: profile?.username ?? "You",
-        photoUrl: profile?.photo_url ?? null,
-        ringColor: "#ffffff",
-      });
-    }
-    targets.forEach((t, i) => {
-      const p = profilesById[t.user_id];
-      const offset = 0.0015 * (i + 1);
-      const angle = (i / Math.max(targets.length, 1)) * Math.PI * 2;
-      out.push({
-        id: t.id,
-        lat: center.lat + Math.cos(angle) * offset,
-        lng: center.lng + Math.sin(angle) * offset,
-        label: p?.username ?? "Target",
-        photoUrl: p?.photo_url ?? null,
-        ringColor: "#ef4444",
+        id: pl.id,
+        lat: loc.lat,
+        lng: loc.lng,
+        label: isMe ? `${prof?.username ?? "You"} (you)` : prof?.username ?? "Player",
+        photoUrl: prof?.photo_url ?? null,
+        ringColor: isMe ? "#ffffff" : isTarget ? "#ef4444" : "#3b82f6",
       });
     });
     return out;
-  }, [myPos, user, profile, targets, profilesById, center.lat, center.lng]);
+  }, [myPos, user, locations, players, profilesById, targets]);
 
   const isHost = game?.host_id === user?.id;
 
