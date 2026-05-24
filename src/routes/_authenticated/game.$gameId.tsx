@@ -371,7 +371,7 @@ function ActivitySection({ players, profilesById, meId, meTargetId }: { players:
         ))}
       </Section>
 
-      <Section title="Bounties" subtitle="Players hunting you." emptyText="No one is hunting you. Yet.">
+      <Section title="Bounties" subtitle="Open targets — anyone can eliminate them for a reward." emptyText="No active bounties right now.">
         {bounties.map((b) => (
           <PlayerRowCard key={b.id} player={b} profile={profilesById[b.user_id]} accent="#f59e0b" badge="BOUNTY" />
         ))}
