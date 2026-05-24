@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileShell } from "@/components/MobileShell";
 import { supabase } from "@/integrations/supabase/client";
-import { Crosshair, Mail, Lock } from "lucide-react";
+import { requestLocationOnce } from "@/lib/location";
+import { Crosshair, Mail, Lock, MapPin, Bell } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
