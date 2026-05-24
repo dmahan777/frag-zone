@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
+
+const PIN_W = 76;
+const PIN_H = 92;
+const RADIUS = 32;
+const CENTER = 38;
 
 type MapMarker = {
   id: string;
