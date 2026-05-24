@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/players/$gameId")({
 
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; display_name: string | null; photo_url: string | null };
-type Filter = "All" | "Active" | "Targets" | "Bounties";
+type Filter = "All" | "Active";
 
 function PlayersScreen() {
   const { gameId } = Route.useParams();
