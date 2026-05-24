@@ -56,7 +56,6 @@ function GameScreen() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId, user?.id]);
 
-  useEffect(() => {
   const loadTeams = async () => {
     const { data } = await supabase.from("teams").select("id, name, color, created_by, max_members").eq("game_id", gameId).order("created_at");
     setTeams((data as TeamRow[]) ?? []);
