@@ -66,6 +66,7 @@
   --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.06);
   --ring: #00E5FF;
+  --map-fallback: #E5E3DF;
 }
 
 @layer base {
