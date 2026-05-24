@@ -24,7 +24,6 @@ type Row = {
 };
 
 function PlayersPage() {
-  const [tab, setTab] = useState<"players" | "teams">("players");
   const [rows, setRows] = useState<Row[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
