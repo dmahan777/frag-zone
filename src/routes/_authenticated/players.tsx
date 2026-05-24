@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Users, Shield, Search, Crosshair } from "lucide-react";
+import { Search, Crosshair } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/players")({
   component: PlayersPage,
