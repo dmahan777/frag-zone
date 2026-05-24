@@ -81,6 +81,10 @@ function GameSettingsPage() {
   const [puRadar, setPuRadar] = useState(true);
   const [puDouble, setPuDouble] = useState(true);
   const [puRevive, setPuRevive] = useState(false);
+  const [puMapSpawn, setPuMapSpawn] = useState(false);
+  const [puSpawnRadius, setPuSpawnRadius] = useState(500);
+  const [puSpawnFreq, setPuSpawnFreq] = useState<"daily" | "weekly">("daily");
+  const [puSpawnCount, setPuSpawnCount] = useState(3);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
