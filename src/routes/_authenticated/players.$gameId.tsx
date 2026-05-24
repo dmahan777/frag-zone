@@ -20,12 +20,9 @@ function PlayersScreen() {
   const [gameName, setGameName] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
   const [q, setQ] = useState("");
-  const [meId, setMeId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      setMeId(u.user?.id ?? null);
       const { data: g } = await supabase.from("games").select("name").eq("id", gameId).maybeSingle();
       setGameName((g as { name: string } | null)?.name ?? "");
       const { data: ps } = await supabase.from("players").select("id, user_id, status, target_id, kills, team_id").eq("game_id", gameId);
@@ -116,42 +113,52 @@ function PlayersScreen() {
         })}
       </div>
 
-      {/* Players */}
-      <div className="px-4 mt-5 space-y-3">
+      {/* Players grouped by team */}
+      <div className="px-4 mt-5 space-y-6">
         {filtered.length === 0 && (
           <div className="text-center text-sm text-foreground/60 mt-10">No players found</div>
         )}
-        {filtered.map((p) => {
-          const pr = profiles[p.user_id];
-          const name = pr?.username || pr?.display_name || "Player";
-          const eliminated = p.status !== "active";
-          const teamName = p.team_id?.trim() || "No Team";
-          const ring = eliminated ? "danger" : "primary";
-          const isMe = p.user_id === meId;
-          return (
-            <div key={p.id} className="flex items-center gap-3 rounded-2xl bg-surface border border-border px-3 py-3">
-              <div className="relative shrink-0">
-                <Avatar name={name} url={pr?.photo_url} size={54} ring={ring} />
-                {eliminated && (
-                  <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-danger text-background text-[10px] font-bold flex items-center justify-center border-2 border-background">
-                    ×
-                  </div>
-                )}
+        {(() => {
+          const groups = new Map<string, typeof filtered>();
+          for (const p of filtered) {
+            const key = p.team_id?.trim() || "No Team";
+            if (!groups.has(key)) groups.set(key, [] as typeof filtered);
+            groups.get(key)!.push(p);
+          }
+          const entries = Array.from(groups.entries()).sort((a, b) => {
+            if (a[0] === "No Team") return 1;
+            if (b[0] === "No Team") return -1;
+            return a[0].localeCompare(b[0]);
+          });
+          return entries.map(([teamName, members]) => (
+            <section key={teamName}>
+              <h2 className="font-display font-extrabold text-lg mb-3">{teamName}</h2>
+              <div className="flex flex-wrap gap-x-5 gap-y-4">
+                {members.map((p) => {
+                  const pr = profiles[p.user_id];
+                  const name = pr?.username || pr?.display_name || "Player";
+                  const eliminated = p.status !== "active";
+                  const ring = eliminated ? "danger" : "primary";
+                  return (
+                    <div key={p.id} className="flex flex-col items-center w-[68px]">
+                      <div className="relative">
+                        <Avatar name={name} url={pr?.photo_url} size={60} ring={ring} />
+                        {eliminated && (
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-danger text-background text-[11px] font-bold flex items-center justify-center border-2 border-background">
+                            ×
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm font-semibold text-center truncate w-full">{name}</p>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-semibold text-sm">{name}</p>
-                  {isMe && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">You</span>}
-                </div>
-                <p className="mt-0.5 text-xs text-foreground/60 truncate">{teamName}</p>
-              </div>
-              <div className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${eliminated ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary"}`}>
-                {eliminated ? "Out" : "Active"}
-              </div>
-            </div>
-          );
-        })}
+            </section>
+          ));
+        })()}
       </div>
+
     </div>
   );
 }
