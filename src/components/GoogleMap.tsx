@@ -44,13 +44,27 @@ function loadMaps(): Promise<void> {
   return loaderPromise;
 }
 
-function svgPin(photoUrl: string | null | undefined, ringColor: string) {
+// Cache photo URLs -> data URLs so the SVG <image> renders reliably (no CORS taint)
+const photoCache = new Map<string, string>();
+async function toDataUrl(url: string): Promise<string> {
+  if (photoCache.has(url)) return photoCache.get(url)!;
+  const res = await fetch(url, { mode: "cors" });
+  const blob = await res.blob();
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+  photoCache.set(url, dataUrl);
+  return dataUrl;
+}
+
+function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
   // Circular avatar pin with colored ring + pointer tail
-  const safe = (photoUrl || "").replace(/"/g, "&quot;");
-  const initials = "?";
-  const img = safe
-    ? `<image href="${safe}" x="6" y="6" width="44" height="44" clip-path="circle(22 at 28 28)" preserveAspectRatio="xMidYMid slice"/>`
-    : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">${initials}</text>`;
+  const img = photoDataUrl
+    ? `<image href="${photoDataUrl}" x="6" y="6" width="44" height="44" clip-path="circle(22 at 28 28)" preserveAspectRatio="xMidYMid slice"/>`
+    : `<circle cx="28" cy="28" r="22" fill="#1f2937"/><text x="28" y="34" font-size="18" text-anchor="middle" fill="#fff" font-family="sans-serif">?</text>`;
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="68" viewBox="0 0 56 68">
       <defs>
