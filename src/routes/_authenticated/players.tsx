@@ -96,19 +96,6 @@ function PlayersPage() {
   );
 }
 
-function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-xs font-bold transition ${
-        active ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground" : "text-muted-foreground"
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
 
 function PlayerRow({ row, rank, compact }: { row: Row; rank?: number; compact?: boolean }) {
   const name = row.profile?.username ?? row.profile?.display_name ?? "operator";
