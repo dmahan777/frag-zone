@@ -137,7 +137,7 @@ function GameScreen() {
 
         {/* Top-center game pill */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
-          <button onClick={() => navigate({ to: "/home" })}
+          <button onClick={() => navigate({ to: "/menu" })}
             className="bg-white shadow-md rounded-full px-4 py-2 max-w-[60vw] flex items-center gap-1.5 active:scale-95 transition">
             <span className="font-semibold text-sm text-foreground/90 truncate" style={{ color: "#0A0C12" }}>{game.name}</span>
             <span className="text-primary text-xs">▾</span>
