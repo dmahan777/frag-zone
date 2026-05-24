@@ -535,23 +535,12 @@ function PlayerLocationCard({
   const [address, setAddress] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      try {
-        const url = `https://connector-gateway.lovable.dev/google_maps/maps/api/geocode/json?latlng=${lat},${lng}`;
-        const apiKey = import.meta.env.VITE_LOVABLE_API_KEY as string | undefined;
-        const connKey = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_API_KEY as string | undefined;
-        const headers: Record<string, string> = {};
-        if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
-        if (connKey) headers["X-Connection-Api-Key"] = connKey;
-        const res = await fetch(url, { headers });
-        const json = await res.json();
-        if (cancelled) return;
-        const addr = json?.results?.[0]?.formatted_address as string | undefined;
-        setAddress(addr ?? `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-      } catch {
-        if (!cancelled) setAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-      }
-    })();
+    // Round to ~0.5km so we don't reveal an exact pin, and so the cache hits as the user moves slightly.
+    const rLat = Math.round(lat * 200) / 200;
+    const rLng = Math.round(lng * 200) / 200;
+    reverseGeocodeCity({ data: { lat: rLat, lng: rLng } })
+      .then((r) => { if (!cancelled) setAddress(r.label); })
+      .catch(() => { if (!cancelled) setAddress(`${lat.toFixed(2)}, ${lng.toFixed(2)}`); });
     return () => { cancelled = true; };
   }, [lat, lng]);
 
