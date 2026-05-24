@@ -136,15 +136,21 @@ export type Database = {
           code: string
           created_at: string
           current_round: number
+          daily_purge_enabled: boolean
+          daily_purge_time: string | null
+          elimination_approval: boolean
+          full_team_elimination: boolean
           host_id: string
           id: string
-          map_center_lat: number | null
-          map_center_lng: number | null
-          map_radius_m: number | null
+          inherit_targets: boolean
+          max_teams: number
           mode: string
           name: string
+          open_registration: boolean
+          players_per_team: number
           purge_enabled: boolean
           purge_interval_minutes: number
+          random_purge: boolean
           revive_enabled: boolean
           round_ends_at: string | null
           rules: string
@@ -156,15 +162,21 @@ export type Database = {
           code: string
           created_at?: string
           current_round?: number
+          daily_purge_enabled?: boolean
+          daily_purge_time?: string | null
+          elimination_approval?: boolean
+          full_team_elimination?: boolean
           host_id: string
           id?: string
-          map_center_lat?: number | null
-          map_center_lng?: number | null
-          map_radius_m?: number | null
+          inherit_targets?: boolean
+          max_teams?: number
           mode?: string
           name: string
+          open_registration?: boolean
+          players_per_team?: number
           purge_enabled?: boolean
           purge_interval_minutes?: number
+          random_purge?: boolean
           revive_enabled?: boolean
           round_ends_at?: string | null
           rules?: string
@@ -176,15 +188,21 @@ export type Database = {
           code?: string
           created_at?: string
           current_round?: number
+          daily_purge_enabled?: boolean
+          daily_purge_time?: string | null
+          elimination_approval?: boolean
+          full_team_elimination?: boolean
           host_id?: string
           id?: string
-          map_center_lat?: number | null
-          map_center_lng?: number | null
-          map_radius_m?: number | null
+          inherit_targets?: boolean
+          max_teams?: number
           mode?: string
           name?: string
+          open_registration?: boolean
+          players_per_team?: number
           purge_enabled?: boolean
           purge_interval_minutes?: number
+          random_purge?: boolean
           revive_enabled?: boolean
           round_ends_at?: string | null
           rules?: string
