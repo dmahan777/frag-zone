@@ -525,7 +525,7 @@ function EmptyHint({ title, body }: { title: string; body: string }) {
   );
 }
 
-function PlayerLocationCard({
+function PlayerLocationCard({ 
   name, isMe, team, photoUrl, lat, lng, speedMph, battery, isLive, ageSec, onClose,
 }: {
   name: string; isMe: boolean; team: string | null; photoUrl: string | null;
