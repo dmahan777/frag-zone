@@ -126,7 +126,7 @@ export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, playe
   if (!myTeam) {
     return (
       <div className="space-y-4">
-        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} playersPerTeam={playersPerTeam} />
         {teams.length > 0 && (
           <div>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Or join an existing team</p>
