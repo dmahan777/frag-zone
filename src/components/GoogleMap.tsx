@@ -84,7 +84,7 @@ function svgPin(photoDataUrl: string | null | undefined, ringColor: string) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-export function GoogleMap({ markers = [], center, zoom = 15, className = "" }: Props) {
+export function GoogleMap({ markers = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerObjs = useRef<any[]>([]);
