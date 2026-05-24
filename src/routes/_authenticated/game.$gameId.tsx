@@ -20,6 +20,7 @@ const TABS: Tab[] = ["Activity", "Players", "Team", "Powerups", "Admin"];
 type GameRow = { id: string; name: string; code: string; status: string; host_id: string; current_round: number; total_rounds: number; round_ends_at: string | null };
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
+type TeamRow = { id: string; name: string; color: string; created_by: string; max_members: number };
 
 type PlayerFilter = "All" | "Active" | "Targets" | "Bounties";
 
