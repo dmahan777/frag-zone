@@ -543,7 +543,7 @@ function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId
 
       {/* Create-a-team form */}
       <div className="mt-5">
-        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} playersPerTeam={playersPerTeam} />
       </div>
 
       {/* Groups */}
