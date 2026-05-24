@@ -100,6 +100,13 @@ function MainMenu() {
     if (!user) return;
     setBusy(true);
     try {
+      let loc: { lat: number; lng: number; accuracy: number };
+      try {
+        loc = await requestLocationOnce();
+      } catch (e) {
+        toast.error((e as Error).message);
+        return;
+      }
       const newCode = generateGameCode();
       const { data: g, error } = await supabase
         .from("games")
@@ -114,6 +121,10 @@ function MainMenu() {
         .single();
       if (error) throw error;
       await supabase.from("players").insert({ game_id: g.id, user_id: user.id });
+      await supabase.from("player_locations").upsert(
+        { user_id: user.id, game_id: g.id, lat: loc.lat, lng: loc.lng, accuracy: loc.accuracy, updated_at: new Date().toISOString() },
+        { onConflict: "user_id,game_id" }
+      );
       await supabase.from("events").insert({
         game_id: g.id,
         type: "system",
