@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      clips: {
+        Row: {
+          caption: string | null
+          created_at: string
+          game_id: string | null
+          id: string
+          likes: number
+          thumbnail_url: string | null
+          user_id: string
+          video_url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          game_id?: string | null
+          id?: string
+          likes?: number
+          thumbnail_url?: string | null
+          user_id: string
+          video_url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          game_id?: string | null
+          id?: string
+          likes?: number
+          thumbnail_url?: string | null
+          user_id?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clips_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eliminations: {
         Row: {
           created_at: string
