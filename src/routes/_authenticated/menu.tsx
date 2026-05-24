@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateGameCode } from "@/lib/game-utils";
 import { requestLocationOnce } from "@/lib/location";
 import { toast } from "sonner";
-import { Plus, LogIn, ChevronRight, Gamepad2 } from "lucide-react";
+import { Plus, LogIn, ChevronRight, Gamepad2, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/menu")({
   component: MainMenu,
