@@ -32,7 +32,8 @@ function GameScreen() {
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [profilesById, setProfilesById] = useState<Record<string, ProfileLite>>({});
   const [tab, setTab] = useState<Tab>("Activity");
-  const [locations, setLocations] = useState<Record<string, { lat: number; lng: number }>>({});
+  const [locations, setLocations] = useState<Record<string, { lat: number; lng: number; speed?: number | null; battery?: number | null; updated_at?: string }>>({});
+  const [focusId, setFocusId] = useState<string | null>(null);
   const myPos = useLiveLocation(gameId, user?.id);
 
   const load = async () => {
