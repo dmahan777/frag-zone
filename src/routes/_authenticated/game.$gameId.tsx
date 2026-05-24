@@ -283,7 +283,7 @@ function GameScreen() {
             <PlayersSection players={players} profilesById={profilesById} meId={user?.id ?? null} meTargetId={me?.target_id ?? null} />
           )}
           {tab === "Team" && (
-            <EmptyHint title="No team yet" body="Join or create a team to coordinate with friends." />
+            <TeamSection gameId={gameId} meId={user?.id ?? null} myPlayerId={me?.id ?? null} myTeamId={me?.team_id ?? null} />
           )}
           {tab === "Powerups" && (
             <EmptyHint title="No powerups" body="Power-ups and gear will show up here." />
