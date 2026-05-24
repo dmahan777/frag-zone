@@ -553,8 +553,9 @@ function PlayerLocationCard({
           <div className="flex items-center gap-2">
             <p className="font-display font-bold truncate">{name}{isMe ? " (you)" : ""}</p>
             <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${isLive ? "bg-emerald-500/20 text-emerald-400" : "bg-muted text-muted-foreground"}`}>
-              {isLive ? "● Live" : "Offline"}
+              {isLive ? "● Live" : `Updated ${ageLabel}`}
             </span>
+
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             Team: <span className="text-foreground/80">{team ?? "—"}</span> · updated {ageLabel}
