@@ -13,7 +13,7 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
   const [maxMembers, setMaxMembers] = useState(4);
   const [busy, setBusy] = useState(false);
 
-  const alreadyCreated = useMemo(() => teams.some((t) => t.created_by === meId), [teams, meId]);
+  void teams;
 
   const create = async () => {
     if (!meId) { toast.error("Sign in to create a team"); return; }
@@ -54,13 +54,6 @@ export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: strin
     toast.success(`Created team ${created.name}`);
   };
 
-  if (alreadyCreated) {
-    return (
-      <div className="bg-surface border border-border rounded-2xl p-4 text-center">
-        <p className="text-sm text-muted-foreground">You've already created a team for this game. See it in the <span className="font-semibold text-foreground">Team</span> tab.</p>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-surface border border-border rounded-2xl p-4">
@@ -145,29 +138,29 @@ export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, playe
   if (!myTeam) {
     return (
       <div className="space-y-4">
-        <div className="bg-surface border border-border rounded-2xl p-4 text-center">
-          <p className="font-display font-bold">You're not on a team</p>
-          <p className="text-sm text-muted-foreground mt-1">Create one from the <span className="font-semibold text-foreground">Players</span> tab, or join one below.</p>
-        </div>
+        <TeamCreator gameId={gameId} meId={meId} myPlayerId={myPlayerId} myTeamId={myTeamId} teams={teams} />
         {teams.length > 0 && (
-          <ul className="space-y-2">
-            {teams.map((t) => {
-              const count = players.filter((p) => p.team_id === t.id).length;
-              const full = count >= t.max_members;
-              return (
-                <li key={t.id} className="flex items-center gap-3 bg-surface border border-border rounded-xl p-3">
-                  <span className="h-6 w-6 rounded-full shrink-0 border border-border" style={{ background: t.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{t.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{count} / {t.max_members} members</p>
-                  </div>
-                  <button onClick={() => join(t.id)} disabled={full} className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground disabled:opacity-50">
-                    {full ? "Full" : "Join"}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2 px-1">Or join an existing team</p>
+            <ul className="space-y-2">
+              {teams.map((t) => {
+                const count = players.filter((p) => p.team_id === t.id).length;
+                const full = count >= t.max_members;
+                return (
+                  <li key={t.id} className="flex items-center gap-3 bg-surface border border-border rounded-xl p-3">
+                    <span className="h-6 w-6 rounded-full shrink-0 border border-border" style={{ background: t.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{t.name}</p>
+                      <p className="text-[11px] text-muted-foreground">{count} / {t.max_members} members</p>
+                    </div>
+                    <button onClick={() => join(t.id)} disabled={full} className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary text-primary-foreground disabled:opacity-50">
+                      {full ? "Full" : "Join"}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </div>
     );
