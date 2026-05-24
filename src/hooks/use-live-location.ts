@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Pos = { lat: number; lng: number };
 
@@ -11,18 +12,33 @@ export function useLiveLocation(gameId: string | undefined, userId: string | und
   const [pos, setPos] = useState<Pos | null>(null);
 
   useEffect(() => {
-    if (!gameId || !userId || typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (!gameId || !userId) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Your device doesn't support location services.");
+      return;
+    }
 
+    let shownError = false;
     let lastSent = 0;
     const push = async (lat: number, lng: number, accuracy: number) => {
       const now = Date.now();
-      // Throttle DB writes to ~once every 4s
       if (now - lastSent < 4000) return;
       lastSent = now;
-      await supabase.from("player_locations").upsert(
+      const { error } = await supabase.from("player_locations").upsert(
         { user_id: userId, game_id: gameId, lat, lng, accuracy, updated_at: new Date().toISOString() },
         { onConflict: "user_id,game_id" }
       );
+      if (error) console.error("location upsert failed", error);
+    };
+
+    const onErr = (err: GeolocationPositionError) => {
+      if (shownError) return;
+      shownError = true;
+      if (err.code === err.PERMISSION_DENIED) {
+        toast.error("Location access denied. Enable location in your browser to appear on the map.");
+      } else {
+        toast.error(`Location error: ${err.message}`);
+      }
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -31,8 +47,8 @@ export function useLiveLocation(gameId: string | undefined, userId: string | und
         setPos(next);
         void push(next.lat, next.lng, p.coords.accuracy);
       },
-      () => {},
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 }
+      onErr,
+      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 }
     );
 
     const watchId = navigator.geolocation.watchPosition(
@@ -41,8 +57,8 @@ export function useLiveLocation(gameId: string | undefined, userId: string | und
         setPos(next);
         void push(next.lat, next.lng, p.coords.accuracy);
       },
-      () => {},
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 }
+      onErr,
+      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 5_000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
