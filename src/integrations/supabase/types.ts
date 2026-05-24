@@ -153,6 +153,7 @@ export type Database = {
           purge_length_minutes: number
           random_purge: boolean
           random_purge_frequency: string
+          random_purge_length_minutes: number
           revive_enabled: boolean
           round_ends_at: string | null
           round_length_days: number
@@ -183,6 +184,7 @@ export type Database = {
           purge_length_minutes?: number
           random_purge?: boolean
           random_purge_frequency?: string
+          random_purge_length_minutes?: number
           revive_enabled?: boolean
           round_ends_at?: string | null
           round_length_days?: number
@@ -213,6 +215,7 @@ export type Database = {
           purge_length_minutes?: number
           random_purge?: boolean
           random_purge_frequency?: string
+          random_purge_length_minutes?: number
           revive_enabled?: boolean
           round_ends_at?: string | null
           round_length_days?: number
