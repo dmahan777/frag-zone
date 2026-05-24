@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -26,13 +26,19 @@ type Game = {
   random_purge_frequency: string;
   random_purge_length_minutes: number;
   purge_length_minutes: number;
+  purge_length_hours: number;
   daily_purge_enabled: boolean;
   daily_purge_time: string | null;
   daily_purge_day_of_week: number | null;
+  powerup_shield: boolean;
+  powerup_radar_ping: boolean;
+  powerup_double_points: boolean;
+  powerup_revive_token: boolean;
+  round_starts_at: string | null;
 };
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-type SectionKey = "rules" | "players" | "round" | "purge";
+type SectionKey = "rules" | "players" | "round" | "purge" | "powerups";
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
@@ -41,8 +47,10 @@ function GameSettingsPage() {
   const [game, setGame] = useState<Game | null>(null);
   const [busy, setBusy] = useState(false);
   const [section, setSection] = useState<SectionKey | null>(null);
+  const [showStartRound, setShowStartRound] = useState(false);
+  const [startDay, setStartDay] = useState<number>(new Date().getDay());
+  const [startTime, setStartTime] = useState<string>("18:00");
 
-  // Editable state
   const [rules, setRules] = useState("");
   const [totalRounds, setTotalRounds] = useState(1);
   const [unlimitedRounds, setUnlimitedRounds] = useState(false);
@@ -57,13 +65,18 @@ function GameSettingsPage() {
   const [fullTeamElimination, setFullTeamElimination] = useState(false);
 
   const [purgeEnabled, setPurgeEnabled] = useState(false);
-  const [purgeLengthMinutes, setPurgeLengthMinutes] = useState(30);
+  const [purgeLengthHours, setPurgeLengthHours] = useState(1);
   const [randomPurge, setRandomPurge] = useState(false);
   const [randomPurgeFrequency, setRandomPurgeFrequency] = useState<"daily" | "weekly">("daily");
   const [randomPurgeLengthMinutes, setRandomPurgeLengthMinutes] = useState(30);
   const [dailyPurgeEnabled, setDailyPurgeEnabled] = useState(false);
   const [dailyPurgeTime, setDailyPurgeTime] = useState<string>("20:00");
   const [dailyPurgeDay, setDailyPurgeDay] = useState<number>(1);
+
+  const [puShield, setPuShield] = useState(true);
+  const [puRadar, setPuRadar] = useState(true);
+  const [puDouble, setPuDouble] = useState(true);
+  const [puRevive, setPuRevive] = useState(false);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
@@ -81,13 +94,17 @@ function GameSettingsPage() {
     setInheritTargets(gg.inherit_targets ?? true);
     setFullTeamElimination(gg.full_team_elimination ?? false);
     setPurgeEnabled(!!gg.purge_enabled);
-    setPurgeLengthMinutes(gg.purge_length_minutes ?? 30);
+    setPurgeLengthHours(gg.purge_length_hours ?? 1);
     setRandomPurge(!!gg.random_purge);
     setRandomPurgeFrequency((gg.random_purge_frequency as "daily" | "weekly") ?? "daily");
     setRandomPurgeLengthMinutes(gg.random_purge_length_minutes ?? 30);
     setDailyPurgeEnabled(!!gg.daily_purge_enabled);
     setDailyPurgeTime((gg.daily_purge_time ?? "20:00:00").slice(0, 5));
     setDailyPurgeDay(gg.daily_purge_day_of_week ?? 1);
+    setPuShield(gg.powerup_shield ?? true);
+    setPuRadar(gg.powerup_radar_ping ?? true);
+    setPuDouble(gg.powerup_double_points ?? true);
+    setPuRevive(gg.powerup_revive_token ?? false);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
@@ -128,17 +145,46 @@ function GameSettingsPage() {
       inherit_targets: inheritTargets,
       full_team_elimination: fullTeamElimination,
       purge_enabled: purgeEnabled,
-      purge_length_minutes: Math.max(1, Math.min(240, Math.round(purgeLengthMinutes))),
+      purge_length_hours: Math.max(1, Math.min(24, Math.round(purgeLengthHours))),
       random_purge: randomPurge,
       random_purge_frequency: randomPurgeFrequency,
       random_purge_length_minutes: Math.max(1, Math.min(240, Math.round(randomPurgeLengthMinutes))),
       daily_purge_enabled: dailyPurgeEnabled,
       daily_purge_time: dailyPurgeEnabled ? `${dailyPurgeTime}:00` : null,
       daily_purge_day_of_week: dailyPurgeEnabled ? dailyPurgeDay : null,
+      powerup_shield: puShield,
+      powerup_radar_ping: puRadar,
+      powerup_double_points: puDouble,
+      powerup_revive_token: puRevive,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
     if (error) toast.error(error.message); else toast.success("Settings saved");
+  };
+
+  const scheduleStartRound = async () => {
+    // Next occurrence of startDay at startTime
+    const now = new Date();
+    const target = new Date(now);
+    const dayDiff = (startDay - now.getDay() + 7) % 7;
+    target.setDate(now.getDate() + dayDiff);
+    const [hh, mm] = startTime.split(":").map(Number);
+    target.setHours(hh, mm, 0, 0);
+    if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 7);
+
+    const { error } = await supabase
+      .from("games")
+      .update({ round_starts_at: target.toISOString(), status: "scheduled" } as never)
+      .eq("id", game.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Round starts ${DAYS[startDay]} at ${startTime}`);
+    setShowStartRound(false);
+  };
+
+  const endGame = async () => {
+    if (!confirm("End the game for everyone? This can't be undone.")) return;
+    const { error } = await supabase.from("games").update({ status: "ended" } as never).eq("id", game.id);
+    if (error) toast.error(error.message); else { toast.success("Game ended"); navigate({ to: "/home" }); }
   };
 
   const sections: { key: SectionKey; title: string; subtitle: string; icon: React.ReactNode }[] = [
@@ -146,6 +192,7 @@ function GameSettingsPage() {
     { key: "players", title: "Players & teams", subtitle: "Team size, number of teams, registration", icon: <Users className="h-4 w-4" /> },
     { key: "round", title: "Round settings", subtitle: "Rounds, length, eliminations", icon: <Timer className="h-4 w-4" /> },
     { key: "purge", title: "Purge settings", subtitle: "Random and scheduled purges", icon: <Skull className="h-4 w-4" /> },
+    { key: "powerups", title: "Powerups", subtitle: "Pick which powerups are in play", icon: <Zap className="h-4 w-4" /> },
   ];
 
   const onBack = () => {
@@ -174,21 +221,91 @@ function GameSettingsPage() {
       </div>
 
       {!section && (
-        <div className="px-5 mt-4 space-y-2">
-          {sections.map((s) => (
+        <>
+          <div className="px-5 mt-4 space-y-2">
+            {sections.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => setSection(s.key)}
+                className="w-full flex items-center gap-3 bg-surface border border-border rounded-2xl p-4 text-left hover:border-primary/60 transition"
+              >
+                <span className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">{s.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-base font-extrabold leading-none">{s.title}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">{s.subtitle}</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+
+          {/* Game actions */}
+          <div className="px-5 mt-6 space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Game actions</p>
+            {game.round_starts_at && (
+              <p className="text-[11px] text-primary mb-1">
+                Scheduled for {new Date(game.round_starts_at).toLocaleString([], { weekday: "long", hour: "numeric", minute: "2-digit" })}
+              </p>
+            )}
             <button
-              key={s.key}
-              onClick={() => setSection(s.key)}
-              className="w-full flex items-center gap-3 bg-surface border border-border rounded-2xl p-4 text-left hover:border-primary/60 transition"
+              onClick={() => setShowStartRound(true)}
+              className="w-full flex items-center gap-3 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-2xl p-4 text-left shadow-glow-primary"
             >
-              <span className="h-10 w-10 rounded-full bg-primary/15 text-primary flex items-center justify-center shrink-0">{s.icon}</span>
+              <span className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center shrink-0"><Play className="h-4 w-4" /></span>
               <div className="flex-1 min-w-0">
-                <p className="font-display text-base font-extrabold leading-none">{s.title}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">{s.subtitle}</p>
+                <p className="font-display text-base font-extrabold leading-none">Start round</p>
+                <p className="text-[11px] opacity-80 mt-1">Pick a day and time the next round kicks off.</p>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
-          ))}
+            <button
+              onClick={endGame}
+              className="w-full flex items-center gap-3 bg-card border border-danger/40 text-danger rounded-2xl p-4 text-left"
+            >
+              <span className="h-10 w-10 rounded-full bg-danger/15 flex items-center justify-center shrink-0"><Flag className="h-4 w-4" /></span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-base font-extrabold leading-none">End game</p>
+                <p className="text-[11px] opacity-80 mt-1">Stop the game for everyone.</p>
+              </div>
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Start round modal */}
+      {showStartRound && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-md bg-surface border border-border rounded-3xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Play className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-lg font-extrabold">Start round</h2>
+            </div>
+            <p className="text-sm font-semibold mb-2">Day</p>
+            <div className="grid grid-cols-4 gap-1.5 mb-4">
+              {DAYS.map((d, i) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setStartDay(i)}
+                  className={`rounded-lg py-1.5 text-[11px] font-bold border ${startDay === i ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground"}`}
+                >
+                  {d.slice(0, 3)}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl px-3 py-3 mb-4">
+              <span className="text-sm font-semibold">Time</span>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button onClick={() => setShowStartRound(false)} className="flex-1 bg-card border border-border rounded-xl py-3 text-sm font-bold">Cancel</button>
+              <button onClick={scheduleStartRound} className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl py-3 text-sm font-bold">Schedule</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -292,7 +409,7 @@ function GameSettingsPage() {
                   </div>
                 </div>
                 <label className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold">Time</span>
+                  <span className="text-sm font-semibold">Start time</span>
                   <input
                     type="time"
                     value={dailyPurgeTime}
@@ -300,14 +417,35 @@ function GameSettingsPage() {
                     className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
                   />
                 </label>
-                <SliderRow label="Scheduled purge length" value={purgeLengthMinutes} min={5} max={240} step={5} onChange={setPurgeLengthMinutes} suffix="min" />
+                <SliderRow label="Scheduled purge length" value={purgeLengthHours} min={1} max={24} onChange={setPurgeLengthHours} suffix={purgeLengthHours === 1 ? "hour" : "hours"} />
+                <p className="text-[11px] text-muted-foreground">
+                  Runs from {dailyPurgeTime} to {addHours(dailyPurgeTime, purgeLengthHours)}.
+                </p>
               </div>
             )}
           </div>
         </Panel>
       )}
+
+      {section === "powerups" && (
+        <Panel>
+          <p className="text-[11px] text-muted-foreground mb-3">Pick which powerups players can earn and use this game.</p>
+          <div className="space-y-2">
+            <Toggle label="Shield" hint="Blocks one elimination attempt." checked={puShield} onChange={setPuShield} />
+            <Toggle label="Radar ping" hint="Reveals nearby players for a few seconds." checked={puRadar} onChange={setPuRadar} />
+            <Toggle label="Double points" hint="Next elimination is worth 2x." checked={puDouble} onChange={setPuDouble} />
+            <Toggle label="Revive token" hint="Lets an eliminated player come back in." checked={puRevive} onChange={setPuRevive} />
+          </div>
+        </Panel>
+      )}
     </div>
   );
+}
+
+function addHours(time: string, hours: number) {
+  const [h, m] = time.split(":").map(Number);
+  const end = (h + hours) % 24;
+  return `${String(end).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 function Panel({ children }: { children: React.ReactNode }) {
