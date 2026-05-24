@@ -138,10 +138,16 @@ export type Database = {
           current_round: number
           host_id: string
           id: string
+          map_center_lat: number | null
+          map_center_lng: number | null
+          map_radius_m: number | null
           mode: string
           name: string
+          purge_enabled: boolean
+          purge_interval_minutes: number
           revive_enabled: boolean
           round_ends_at: string | null
+          rules: string
           safe_zones: Json
           status: string
           total_rounds: number
@@ -152,10 +158,16 @@ export type Database = {
           current_round?: number
           host_id: string
           id?: string
+          map_center_lat?: number | null
+          map_center_lng?: number | null
+          map_radius_m?: number | null
           mode?: string
           name: string
+          purge_enabled?: boolean
+          purge_interval_minutes?: number
           revive_enabled?: boolean
           round_ends_at?: string | null
+          rules?: string
           safe_zones?: Json
           status?: string
           total_rounds?: number
@@ -166,10 +178,16 @@ export type Database = {
           current_round?: number
           host_id?: string
           id?: string
+          map_center_lat?: number | null
+          map_center_lng?: number | null
+          map_radius_m?: number | null
           mode?: string
           name?: string
+          purge_enabled?: boolean
+          purge_interval_minutes?: number
           revive_enabled?: boolean
           round_ends_at?: string | null
+          rules?: string
           safe_zones?: Json
           status?: string
           total_rounds?: number

@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.delete_empty_teams() FROM PUBLIC, anon, authenticated;
