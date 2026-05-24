@@ -14,20 +14,26 @@ type Game = {
   current_round: number; total_rounds: number;
   rules: string;
   purge_enabled: boolean;
-  purge_interval_minutes: number;
   max_teams: number;
   open_registration: boolean;
   players_per_team: number;
   elimination_approval: boolean;
   inherit_targets: boolean;
   full_team_elimination: boolean;
+  unlimited_rounds: boolean;
+  round_length_days: number;
   random_purge: boolean;
+  random_purge_frequency: string;
+  purge_length_minutes: number;
   daily_purge_enabled: boolean;
   daily_purge_time: string | null;
+  daily_purge_day_of_week: number | null;
 };
 type PlayerRow = { id: string; user_id: string; status: string; team_id: string | null };
 type TeamRow = { id: string; name: string; color: string; max_members: number; created_by: string };
 type ProfileLite = { id: string; username: string | null; photo_url: string | null };
+
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
@@ -42,6 +48,8 @@ function GameSettingsPage() {
   // Editable state
   const [rules, setRules] = useState("");
   const [totalRounds, setTotalRounds] = useState(1);
+  const [unlimitedRounds, setUnlimitedRounds] = useState(false);
+  const [roundLengthDays, setRoundLengthDays] = useState(1);
 
   // Players & teams
   const [maxTeams, setMaxTeams] = useState(8);
@@ -55,10 +63,12 @@ function GameSettingsPage() {
 
   // Purge
   const [purgeEnabled, setPurgeEnabled] = useState(false);
-  const [purgeMinutes, setPurgeMinutes] = useState(60);
+  const [purgeLengthMinutes, setPurgeLengthMinutes] = useState(30);
   const [randomPurge, setRandomPurge] = useState(false);
+  const [randomPurgeFrequency, setRandomPurgeFrequency] = useState<"daily" | "weekly">("daily");
   const [dailyPurgeEnabled, setDailyPurgeEnabled] = useState(false);
   const [dailyPurgeTime, setDailyPurgeTime] = useState<string>("20:00");
+  const [dailyPurgeDay, setDailyPurgeDay] = useState<number>(1);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
