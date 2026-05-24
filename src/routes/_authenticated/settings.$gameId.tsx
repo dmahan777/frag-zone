@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -203,6 +203,24 @@ function GameSettingsPage() {
     if (error) toast.error(error.message); else { toast.success("Game ended"); navigate({ to: "/home" }); }
   };
 
+  const deleteGame = async () => {
+    if (!confirm(`Delete "${game.name}" permanently? This wipes players, teams, clips, and history. This can't be undone.`)) return;
+    if (!confirm("Are you absolutely sure? This is permanent.")) return;
+    setBusy(true);
+    await supabase.from("eliminations").delete().eq("game_id", game.id);
+    await supabase.from("events").delete().eq("game_id", game.id);
+    await supabase.from("messages").delete().eq("game_id", game.id);
+    await supabase.from("player_locations").delete().eq("game_id", game.id);
+    await supabase.from("clips").delete().eq("game_id", game.id);
+    await supabase.from("players").delete().eq("game_id", game.id);
+    await supabase.from("teams").delete().eq("game_id", game.id);
+    const { error } = await supabase.from("games").delete().eq("id", game.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Game deleted");
+    navigate({ to: "/home" });
+  };
+
   const sections: { key: SectionKey; title: string; subtitle: string; icon: React.ReactNode }[] = [
     { key: "rules", title: "Game rules", subtitle: "Your custom rules players follow", icon: <ScrollText className="h-4 w-4" /> },
     { key: "players", title: "Players & teams", subtitle: "Team size, number of teams, registration", icon: <Users className="h-4 w-4" /> },
@@ -281,6 +299,17 @@ function GameSettingsPage() {
               <div className="flex-1 min-w-0">
                 <p className="font-display text-base font-extrabold leading-none">End game</p>
                 <p className="text-[11px] opacity-80 mt-1">Stop the game for everyone.</p>
+              </div>
+            </button>
+            <button
+              disabled={busy}
+              onClick={deleteGame}
+              className="w-full flex items-center gap-3 bg-danger/10 border border-danger text-danger rounded-2xl p-4 text-left disabled:opacity-50"
+            >
+              <span className="h-10 w-10 rounded-full bg-danger/20 flex items-center justify-center shrink-0"><Trash2 className="h-4 w-4" /></span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-base font-extrabold leading-none">Delete game</p>
+                <p className="text-[11px] opacity-80 mt-1">Permanently remove this game and all its data.</p>
               </div>
             </button>
           </div>
