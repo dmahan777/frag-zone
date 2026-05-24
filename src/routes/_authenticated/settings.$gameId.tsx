@@ -137,7 +137,9 @@ function GameSettingsPage() {
     setBusy(true);
     const payload: Partial<Game> = {
       rules: rules.trim().slice(0, 4000),
+      unlimited_rounds: unlimitedRounds,
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
+      round_length_days: Math.max(1, Math.min(14, Math.round(roundLengthDays))),
       max_teams: Math.max(1, Math.min(64, Math.round(maxTeams))),
       open_registration: openRegistration,
       players_per_team: Math.max(1, Math.min(32, Math.round(playersPerTeam))),
@@ -145,10 +147,12 @@ function GameSettingsPage() {
       inherit_targets: inheritTargets,
       full_team_elimination: fullTeamElimination,
       purge_enabled: purgeEnabled,
-      purge_interval_minutes: Math.max(5, Math.min(1440, Math.round(purgeMinutes))),
+      purge_length_minutes: Math.max(1, Math.min(240, Math.round(purgeLengthMinutes))),
       random_purge: randomPurge,
+      random_purge_frequency: randomPurgeFrequency,
       daily_purge_enabled: dailyPurgeEnabled,
       daily_purge_time: dailyPurgeEnabled ? `${dailyPurgeTime}:00` : null,
+      daily_purge_day_of_week: dailyPurgeEnabled ? dailyPurgeDay : null,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
