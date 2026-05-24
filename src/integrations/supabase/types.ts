@@ -150,9 +150,13 @@ export type Database = {
           open_registration: boolean
           players_per_team: number
           powerup_double_points: boolean
+          powerup_map_spawn: boolean
           powerup_radar_ping: boolean
           powerup_revive_token: boolean
           powerup_shield: boolean
+          powerup_spawn_count: number
+          powerup_spawn_frequency: string
+          powerup_spawn_radius_m: number
           purge_enabled: boolean
           purge_length_hours: number
           purge_length_minutes: number
@@ -187,9 +191,13 @@ export type Database = {
           open_registration?: boolean
           players_per_team?: number
           powerup_double_points?: boolean
+          powerup_map_spawn?: boolean
           powerup_radar_ping?: boolean
           powerup_revive_token?: boolean
           powerup_shield?: boolean
+          powerup_spawn_count?: number
+          powerup_spawn_frequency?: string
+          powerup_spawn_radius_m?: number
           purge_enabled?: boolean
           purge_length_hours?: number
           purge_length_minutes?: number
@@ -224,9 +232,13 @@ export type Database = {
           open_registration?: boolean
           players_per_team?: number
           powerup_double_points?: boolean
+          powerup_map_spawn?: boolean
           powerup_radar_ping?: boolean
           powerup_revive_token?: boolean
           powerup_shield?: boolean
+          powerup_spawn_count?: number
+          powerup_spawn_frequency?: string
+          powerup_spawn_radius_m?: number
           purge_enabled?: boolean
           purge_length_hours?: number
           purge_length_minutes?: number
