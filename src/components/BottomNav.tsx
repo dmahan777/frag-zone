@@ -21,7 +21,7 @@ export function BottomNav() {
             const Icon = t.icon;
             if (t.center) {
               return (
-                <Link key={t.to} to={t.to} className="flex flex-col items-center -mt-7">
+                <Link key={t.to} to={t.to as any} className="flex flex-col items-center -mt-7">
                   <div className={`h-14 w-14 rounded-2xl flex items-center justify-center transition-all
                     ${active
                       ? "bg-gradient-to-br from-primary to-secondary shadow-glow-primary scale-105"
@@ -33,7 +33,7 @@ export function BottomNav() {
               );
             }
             return (
-              <Link key={t.to} to={t.to} className="flex flex-col items-center gap-1 py-2 px-3 min-w-[60px]">
+              <Link key={t.to} to={t.to as any} className="flex flex-col items-center gap-1 py-2 px-3 min-w-[60px]">
                 <Icon className={`h-5 w-5 transition-colors ${active ? "text-primary" : "text-muted-foreground"}`} />
                 <span className={`text-[10px] font-medium transition-colors ${active ? "text-primary" : "text-muted-foreground"}`}>{t.label}</span>
               </Link>
