@@ -7,10 +7,9 @@ export type TeamRow = { id: string; name: string; color: string; created_by: str
 export type PlayerLite = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 export type ProfileLite = { id: string; username: string | null; photo_url: string | null; school: string | null };
 
-export function TeamCreator({ gameId, meId, myPlayerId, teams }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[] }) {
+export function TeamCreator({ gameId, meId, myPlayerId, teams, playersPerTeam }: { gameId: string; meId: string | null; myPlayerId: string | null; myTeamId: string | null; teams: TeamRow[]; playersPerTeam: number }) {
   const [name, setName] = useState("");
   const [color, setColor] = useState("#3b82f6");
-  const [maxMembers, setMaxMembers] = useState(4);
   const [busy, setBusy] = useState(false);
 
   void teams;
