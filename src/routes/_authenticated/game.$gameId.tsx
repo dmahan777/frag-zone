@@ -233,7 +233,35 @@ function GameScreen() {
               Open admin panel
             </button>
           )}
-        </div>
+        </SwipeTabs>
+      </div>
+    </div>
+  );
+}
+
+function SwipeTabs({ tab, setTab, tabs, className, children }: { tab: Tab; setTab: (t: Tab) => void; tabs: Tab[]; className?: string; children: React.ReactNode }) {
+  const startX = useRef<number | null>(null);
+  const startY = useRef<number | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    startY.current = e.touches[0].clientY;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (startX.current === null || startY.current === null) return;
+    const dx = e.changedTouches[0].clientX - startX.current;
+    const dy = e.changedTouches[0].clientY - startY.current;
+    startX.current = null;
+    startY.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+    const idx = tabs.indexOf(tab);
+    if (idx === -1) return;
+    if (dx < 0 && idx < tabs.length - 1) setTab(tabs[idx + 1]);
+    if (dx > 0 && idx > 0) setTab(tabs[idx - 1]);
+  };
+  return (
+    <div className={className} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div key={tab} className="animate-fade-in">
+        {children}
       </div>
     </div>
   );
