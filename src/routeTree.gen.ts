@@ -15,9 +15,11 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTargetRouteImport } from './routes/_authenticated/target'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedPlayersRouteImport } from './routes/_authenticated/players'
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedClipsRouteImport } from './routes/_authenticated/clips'
 import { Route as AuthenticatedAdminGameIdRouteImport } from './routes/_authenticated/admin.$gameId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -49,6 +51,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedPlayersRoute = AuthenticatedPlayersRouteImport.update({
+  id: '/players',
+  path: '/players',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
   id: '/map',
   path: '/map',
@@ -65,6 +72,11 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedClipsRoute = AuthenticatedClipsRouteImport.update({
+  id: '/clips',
+  path: '/clips',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminGameIdRoute =
   AuthenticatedAdminGameIdRouteImport.update({
     id: '/admin/$gameId',
@@ -76,9 +88,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/clips': typeof AuthenticatedClipsRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/map': typeof AuthenticatedMapRoute
+  '/players': typeof AuthenticatedPlayersRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
@@ -87,9 +101,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/clips': typeof AuthenticatedClipsRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/map': typeof AuthenticatedMapRoute
+  '/players': typeof AuthenticatedPlayersRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
@@ -100,9 +116,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/_authenticated/clips': typeof AuthenticatedClipsRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
+  '/_authenticated/players': typeof AuthenticatedPlayersRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/target': typeof AuthenticatedTargetRoute
   '/_authenticated/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
@@ -113,9 +131,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/onboarding'
+    | '/clips'
     | '/home'
     | '/leaderboard'
     | '/map'
+    | '/players'
     | '/profile'
     | '/target'
     | '/admin/$gameId'
@@ -124,9 +144,11 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/onboarding'
+    | '/clips'
     | '/home'
     | '/leaderboard'
     | '/map'
+    | '/players'
     | '/profile'
     | '/target'
     | '/admin/$gameId'
@@ -136,9 +158,11 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/onboarding'
+    | '/_authenticated/clips'
     | '/_authenticated/home'
     | '/_authenticated/leaderboard'
     | '/_authenticated/map'
+    | '/_authenticated/players'
     | '/_authenticated/profile'
     | '/_authenticated/target'
     | '/_authenticated/admin/$gameId'
@@ -195,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/players': {
+      id: '/_authenticated/players'
+      path: '/players'
+      fullPath: '/players'
+      preLoaderRoute: typeof AuthenticatedPlayersRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/map': {
       id: '/_authenticated/map'
       path: '/map'
@@ -216,6 +247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHomeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/clips': {
+      id: '/_authenticated/clips'
+      path: '/clips'
+      fullPath: '/clips'
+      preLoaderRoute: typeof AuthenticatedClipsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/$gameId': {
       id: '/_authenticated/admin/$gameId'
       path: '/admin/$gameId'
@@ -227,18 +265,22 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedClipsRoute: typeof AuthenticatedClipsRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
+  AuthenticatedPlayersRoute: typeof AuthenticatedPlayersRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedTargetRoute: typeof AuthenticatedTargetRoute
   AuthenticatedAdminGameIdRoute: typeof AuthenticatedAdminGameIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedClipsRoute: AuthenticatedClipsRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
+  AuthenticatedPlayersRoute: AuthenticatedPlayersRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedTargetRoute: AuthenticatedTargetRoute,
   AuthenticatedAdminGameIdRoute: AuthenticatedAdminGameIdRoute,
