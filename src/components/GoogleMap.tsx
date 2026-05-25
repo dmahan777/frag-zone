@@ -15,8 +15,11 @@ type MapMarker = {
   ringColor?: string; // hex
 };
 
+export type MapZone = { north: number; south: number; east: number; west: number; color?: string; label?: string };
+
 type Props = {
   markers?: MapMarker[];
+  zones?: MapZone[];
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
