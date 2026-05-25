@@ -152,7 +152,7 @@ function GameSettingsPage() {
 
   const save = async () => {
     setBusy(true);
-    const payload: Partial<Game> = {
+    const payload: Record<string, unknown> = {
       rules: rules.trim().slice(0, 4000),
       unlimited_rounds: unlimitedRounds,
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
