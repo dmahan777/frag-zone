@@ -181,6 +181,30 @@ function ClipCard({ clip, meId, liked, onLikeToggle, onReview, onDelete }: {
           </p>
         </div>
         <StatusBadge status={clip.status} />
+        {canDelete && (
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((s) => !s)}
+              className="h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center text-foreground/70"
+              aria-label="More options"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-9 z-20 min-w-[140px] bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                  <button
+                    onClick={() => { setMenuOpen(false); onDelete(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10"
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <video
