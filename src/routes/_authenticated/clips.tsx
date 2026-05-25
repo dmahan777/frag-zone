@@ -267,7 +267,7 @@ function Comments({ clipId, meId }: { clipId: string; meId: string | null }) {
     const { data: profs } = ids.length
       ? await supabase.from("profiles").select("id,username,display_name,photo_url").in("id", ids)
       : { data: [] as any[] } as any;
-    const map = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const map = new Map<string, ProfileLite>((profs ?? []).map((p: any) => [p.id, p as ProfileLite]));
     setItems(arr.map((c) => ({ ...c, profile: map.get(c.user_id) ?? null })));
   };
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [clipId]);
