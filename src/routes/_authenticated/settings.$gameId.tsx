@@ -618,11 +618,26 @@ function GameSettingsPage() {
           </div>
         </Panel>
       )}
+
+      {section === "events" && (
+        <EventsPanel gameId={game.id} hostId={user?.id ?? ""} />
+      )}
+
       <SpawnAreaDrawer
         open={drawerOpen}
         initial={spawnArea}
         onClose={() => setDrawerOpen(false)}
         onSave={(a) => setSpawnArea(a)}
+      />
+      <SpawnAreaDrawer
+        open={!!zoneDrawerFor}
+        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zone ?? null) : null}
+        onClose={() => setZoneDrawerFor(null)}
+        onSave={(a) => {
+          if (!zoneDrawerFor) return;
+          const key = zoneDrawerFor as keyof PowerupConfig;
+          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zone: a } });
+        }}
       />
     </div>
   );
