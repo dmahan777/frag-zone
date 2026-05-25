@@ -31,25 +31,29 @@ function Login() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        // Try to get location (optional - don't block signup if it fails)
-        if (allowLocation) {
-          try {
-            await requestLocationOnce();
-          } catch (err) {
-            console.warn("Location request failed:", err);
-          }
+        if (!allowLocation) {
+          toast.error("Location sharing is required to create an account.");
+          setLoading(false);
+          return;
         }
+        await requestLocationOnce();
         // Notifications are optional
         if (allowNotifications && typeof Notification !== "undefined" && Notification.permission === "default") {
           try { await Notification.requestPermission(); } catch {}
         }
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
-        toast.success("Account created! Setting you up...");
+        if (data.session) {
+          toast.success("Account created! Setting you up...");
+          navigate({ to: "/onboarding" });
+        } else {
+          toast.success("Account created! Check your email to verify it, then sign in.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -149,7 +153,7 @@ function Login() {
               </div>
             </div>
 
-            {!isSignin ? null : (
+            {isSignin ? null : (
               <div className="space-y-2 pt-2">
                 <PermissionToggle
                   icon={<MapPin className="h-4 w-4" />}
@@ -225,7 +229,7 @@ function PermissionToggle({
   return (
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      onClick={() => onChange(required ? true : !checked)}
       className="w-full flex items-center gap-3 bg-card/40 border border-border rounded-2xl p-3 text-left active:scale-[0.99] transition"
     >
       <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${checked ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
