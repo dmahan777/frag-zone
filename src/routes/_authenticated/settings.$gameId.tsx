@@ -513,53 +513,67 @@ function GameSettingsPage() {
 
       {section === "powerups" && (
         <Panel>
-          <p className="text-[11px] text-muted-foreground mb-3">Pick which powerups players can earn and use this game.</p>
+          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
           <div className="space-y-2">
-            <Toggle label="Shield" hint="Blocks one elimination attempt." checked={puShield} onChange={setPuShield} />
-            <Toggle label="Radar ping" hint="Reveals nearby players for a few seconds." checked={puRadar} onChange={setPuRadar} />
-            <Toggle label="Double points" hint="Next elimination is worth 2x." checked={puDouble} onChange={setPuDouble} />
-            <Toggle label="Revive token" hint="Lets an eliminated player come back in." checked={puRevive} onChange={setPuRevive} />
+            {POWERUPS.map((p) => (
+              <Toggle
+                key={p.type}
+                label={`${p.emoji} ${p.name}`}
+                hint={`${p.scope === "team" ? "Team • " : ""}${p.short}`}
+                checked={puConfig[p.type]?.enabled ?? true}
+                onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...puConfig[p.type], enabled: v } })}
+              />
+            ))}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Legacy / map spawn</p>
             <Toggle label="Random map spawn" hint="Powerups appear at random spots on the map for players to grab." checked={puMapSpawn} onChange={setPuMapSpawn} />
           </div>
 
           {puMapSpawn && (
             <div className="mt-4 bg-card border border-border rounded-xl p-3 space-y-4">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
-              <SliderRow
-                label="Spawn area radius"
-                value={puSpawnRadius}
-                min={50}
-                max={5000}
-                step={50}
-                onChange={setPuSpawnRadius}
-                suffix="m"
-              />
+              <SliderRow label="Spawn area radius" value={puSpawnRadius} min={50} max={5000} step={50} onChange={setPuSpawnRadius} suffix="m" />
               <div>
                 <p className="text-sm text-muted-foreground mb-1.5">How often</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["daily", "weekly"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setPuSpawnFreq(f)}
-                      className={`h-10 rounded-xl text-sm font-semibold border ${puSpawnFreq === f ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"}`}
-                    >
+                    <button key={f} onClick={() => setPuSpawnFreq(f)}
+                      className={`h-10 rounded-xl text-sm font-semibold border ${puSpawnFreq === f ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"}`}>
                       {f === "daily" ? "Each day" : "Each week"}
                     </button>
                   ))}
                 </div>
               </div>
-              <SliderRow
-                label={`Powerups per ${puSpawnFreq === "daily" ? "day" : "week"}`}
-                value={puSpawnCount}
-                min={1}
-                max={25}
-                onChange={setPuSpawnCount}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                {puSpawnCount} powerup{puSpawnCount === 1 ? "" : "s"} will randomly spawn within {puSpawnRadius}m {puSpawnFreq === "daily" ? "each day" : "each week"}.
-              </p>
+              <SliderRow label={`Powerups per ${puSpawnFreq === "daily" ? "day" : "week"}`} value={puSpawnCount} min={1} max={25} onChange={setPuSpawnCount} />
             </div>
           )}
+        </Panel>
+      )}
+
+      {section === "points" && (
+        <Panel>
+          <p className="text-[11px] text-muted-foreground mb-3">Points earned per confirmed elimination. Costs adjust in steps of 50.</p>
+          <StepperRow label="Points per elimination" value={pointsPerElim} step={50} min={0} max={5000} onChange={setPointsPerElim} />
+
+          <div className="mt-5 pt-4 border-t border-border space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Powerup store prices</p>
+            {POWERUPS.map((p) => (
+              <div key={p.type} className={`bg-card border border-border rounded-xl px-3 py-2 ${puConfig[p.type]?.enabled === false ? "opacity-50" : ""}`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-sm font-semibold">{p.emoji} {p.name}</p>
+                  <span className="text-[10px] uppercase text-muted-foreground">{p.scope}</span>
+                </div>
+                <StepperRow
+                  label="Cost"
+                  value={puConfig[p.type]?.cost ?? p.defaultCost}
+                  step={50} min={0} max={10000}
+                  onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...puConfig[p.type], cost: v } })}
+                />
+              </div>
+            ))}
+          </div>
         </Panel>
       )}
     </div>
