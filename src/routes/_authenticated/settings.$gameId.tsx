@@ -534,6 +534,16 @@ function GameSettingsPage() {
                     checked={c.enabled}
                     onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, enabled: v } })}
                   />
+                  {p.durationMs !== null && (
+                    <div className="mt-2 pt-2 border-t border-border/60">
+                      <StepperRow
+                        label="Duration (minutes)"
+                        value={c.durationMinutes ?? Math.round((p.durationMs ?? 0) / 60000)}
+                        step={5} min={1} max={1440}
+                        onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, durationMinutes: v } })}
+                      />
+                    </div>
+                  )}
                   <div className="mt-2 pt-2 border-t border-border/60">
                     <Toggle
                       label="Purchase zones"
