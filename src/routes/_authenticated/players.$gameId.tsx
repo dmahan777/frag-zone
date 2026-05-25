@@ -127,41 +127,57 @@ function PlayersScreen() {
         {(() => {
           const groups = new Map<string, typeof filtered>();
           for (const p of filtered) {
-            const key = p.team_id?.trim() || "No Team";
+            const key = p.team_id?.trim() || "__none__";
             if (!groups.has(key)) groups.set(key, [] as typeof filtered);
             groups.get(key)!.push(p);
           }
           const entries = Array.from(groups.entries()).sort((a, b) => {
-            if (a[0] === "No Team") return 1;
-            if (b[0] === "No Team") return -1;
-            return a[0].localeCompare(b[0]);
+            if (a[0] === "__none__") return 1;
+            if (b[0] === "__none__") return -1;
+            const an = teams[a[0]]?.name ?? a[0];
+            const bn = teams[b[0]]?.name ?? b[0];
+            return an.localeCompare(bn);
           });
-          return entries.map(([teamName, members]) => (
-            <section key={teamName}>
-              <h2 className="font-display font-extrabold text-2xl tracking-tight mb-4">{teamName}</h2>
-              <div className="flex flex-wrap gap-x-5 gap-y-4">
-                {members.map((p) => {
-                  const pr = profiles[p.user_id];
-                  const name = pr?.username || pr?.display_name || "Player";
-                  const eliminated = p.status !== "active";
-                  const ring = eliminated ? "danger" : "primary";
-                  return (
-                    <div key={p.id} className="flex flex-col items-center w-[68px]">
-                      <div className="relative">
-                        <Avatar name={name} url={pr?.photo_url} size={60} ring={ring} />
-                        {eliminated && (
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-danger text-background text-[11px] font-bold flex items-center justify-center border-2 border-background">
-                            ×
-                          </div>
-                        )}
+          return entries.map(([teamKey, members]) => {
+            const team = teamKey === "__none__" ? null : teams[teamKey];
+            const label = team?.name ?? (teamKey === "__none__" ? "No Team" : "Team");
+            const color = team?.color ?? null;
+            return (
+              <section key={teamKey}>
+                <div className="flex items-center gap-3 mb-4">
+                  {color && <span className="h-6 w-6 rounded-full border border-border shrink-0" style={{ background: color }} />}
+                  <h2 className="font-display font-extrabold text-3xl tracking-tight" style={color ? { color } : undefined}>{label}</h2>
+                  <span className="text-xs text-muted-foreground">({members.length})</span>
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-4">
+                  {members.map((p) => {
+                    const pr = profiles[p.user_id];
+                    const name = pr?.username || pr?.display_name || "Player";
+                    const eliminated = p.status !== "active";
+                    return (
+                      <div key={p.id} className="flex flex-col items-center w-[68px]">
+                        <div className="relative">
+                          <Avatar
+                            name={name}
+                            url={pr?.photo_url}
+                            size={60}
+                            ring={eliminated ? "danger" : (color ? "none" : "primary")}
+                            ringColor={!eliminated ? color : null}
+                          />
+                          {eliminated && (
+                            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-5 w-5 rounded-full bg-danger text-background text-[11px] font-bold flex items-center justify-center border-2 border-background">
+                              ×
+                            </div>
+                          )}
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-center truncate w-full">{name}</p>
                       </div>
-                      <p className="mt-2 text-sm font-semibold text-center truncate w-full">{name}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ));
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          });
         })()}
       </div>
 
