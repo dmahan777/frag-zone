@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt, Coins } from "lucide-react";
 import { assignTargetsForGame } from "@/lib/assign-targets";
+import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
