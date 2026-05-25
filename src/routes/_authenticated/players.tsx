@@ -23,8 +23,11 @@ type Row = {
   } | null;
 };
 
+type TeamLite = { id: string; name: string; color: string };
+
 function PlayersPage() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [teams, setTeams] = useState<Record<string, TeamLite>>({});
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +47,16 @@ function PlayersPage() {
             .in("id", ids)
         : { data: [] as any[] };
 
+      const teamIds = Array.from(
+        new Set((players ?? []).map((p) => p.team_id).filter(Boolean) as string[]),
+      );
+      const { data: teamRows } = teamIds.length
+        ? await supabase.from("teams").select("id,name,color").in("id", teamIds)
+        : { data: [] as any[] };
+      const tmap: Record<string, TeamLite> = {};
+      (teamRows ?? []).forEach((t: any) => { tmap[t.id] = t as TeamLite; });
+      setTeams(tmap);
+
       const byId = new Map((profiles ?? []).map((p: any) => [p.id, p]));
       setRows(
         (players ?? []).map((p: any) => ({
@@ -58,13 +71,29 @@ function PlayersPage() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return rows;
-    return rows.filter((r) =>
-      [r.profile?.username, r.profile?.display_name, r.team_id]
+    return rows.filter((r) => {
+      const teamName = r.team_id ? teams[r.team_id]?.name ?? "" : "";
+      return [r.profile?.username, r.profile?.display_name, teamName]
         .filter(Boolean)
-        .some((s) => (s as string).toLowerCase().includes(needle)),
-    );
-  }, [rows, q]);
+        .some((s) => (s as string).toLowerCase().includes(needle));
+    });
+  }, [rows, q, teams]);
 
+  const groups = useMemo(() => {
+    const m = new Map<string, Row[]>();
+    for (const r of filtered) {
+      const key = r.team_id?.trim() || "__none__";
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(r);
+    }
+    return Array.from(m.entries()).sort((a, b) => {
+      if (a[0] === "__none__") return 1;
+      if (b[0] === "__none__") return -1;
+      const an = teams[a[0]]?.name ?? "";
+      const bn = teams[b[0]]?.name ?? "";
+      return an.localeCompare(bn);
+    });
+  }, [filtered, teams]);
 
   return (
     <div className="px-5 pt-12 pb-4">
@@ -90,11 +119,37 @@ function PlayersPage() {
       {loading && <p className="mt-8 text-center text-sm text-muted-foreground">Loading…</p>}
 
       {!loading && (
-        <div className="mt-5 space-y-2">
-          {filtered.length === 0 && <Empty text="No players yet." />}
-          {filtered.map((r, i) => (
-            <PlayerRow key={r.id} rank={i + 1} row={r} />
-          ))}
+        <div className="mt-6 space-y-8">
+          {groups.length === 0 && <Empty text="No players yet." />}
+          {groups.map(([teamKey, members]) => {
+            const team = teamKey === "__none__" ? null : teams[teamKey];
+            const label = team?.name ?? (teamKey === "__none__" ? "No Team" : "Team");
+            const color = team?.color ?? null;
+            return (
+              <section key={teamKey}>
+                <div className="flex items-center gap-3 mb-3">
+                  {color && (
+                    <span
+                      className="h-6 w-6 rounded-full border border-border shrink-0"
+                      style={{ background: color }}
+                    />
+                  )}
+                  <h2
+                    className="font-display font-extrabold text-4xl tracking-tight"
+                    style={color ? { color } : undefined}
+                  >
+                    {label}
+                  </h2>
+                  <span className="text-xs text-muted-foreground">({members.length})</span>
+                </div>
+                <div className="space-y-2">
+                  {members.map((r, i) => (
+                    <PlayerRow key={r.id} rank={i + 1} row={r} teamColor={color} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
@@ -102,18 +157,24 @@ function PlayersPage() {
 }
 
 
-function PlayerRow({ row, rank, compact }: { row: Row; rank?: number; compact?: boolean }) {
+function PlayerRow({ row, rank, compact, teamColor }: { row: Row; rank?: number; compact?: boolean; teamColor?: string | null }) {
   const name = row.profile?.username ?? row.profile?.display_name ?? "operator";
   return (
     <div className={`flex items-center gap-3 ${compact ? "px-4 py-3" : "bg-card border border-border rounded-2xl p-3"}`}>
       {rank !== undefined && (
         <div className="w-6 text-center font-display font-extrabold text-muted-foreground text-sm">{rank}</div>
       )}
-      <Avatar name={name} url={row.profile?.photo_url ?? null} size={40} />
+      <Avatar
+        name={name}
+        url={row.profile?.photo_url ?? null}
+        size={40}
+        ring={teamColor ? "none" : "primary"}
+        ringColor={teamColor ?? null}
+      />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold truncate">@{name}</p>
+        <p className="font-semibold truncate">{name}</p>
         <p className="text-xs text-muted-foreground truncate">
-          {row.profile?.school ?? "no school"} {row.team_id ? `· ${row.team_id}` : ""}
+          {row.profile?.school ?? "no school"}
         </p>
       </div>
       <div className="flex items-center gap-1.5 text-sm font-bold">
