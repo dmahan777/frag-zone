@@ -631,14 +631,14 @@ function GameSettingsPage() {
         onClose={() => setDrawerOpen(false)}
         onSave={(a) => setSpawnArea(a)}
       />
-      <SpawnAreaDrawer
+      <MultiZoneDrawer
         open={!!zoneDrawerFor}
-        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zone ?? null) : null}
+        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zones ?? []) : []}
         onClose={() => setZoneDrawerFor(null)}
-        onSave={(a) => {
+        onSave={(zs: Zone[]) => {
           if (!zoneDrawerFor) return;
           const key = zoneDrawerFor as keyof PowerupConfig;
-          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zone: a } });
+          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zones: zs } });
         }}
       />
     </div>
