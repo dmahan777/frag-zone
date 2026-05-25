@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar } from "@/components/Avatar";
 import { StatusBadge } from "@/components/StatusBadge";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Settings, Share2, Trophy, Flame, Calendar, Skull, Camera, Loader2 } from "lucide-react";
+import { LogOut, Settings, Share2, Calendar, Skull, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/profile")({
