@@ -258,9 +258,20 @@ function GameScreen() {
 
         {/* Tabs row */}
         <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto overflow-y-visible scrollbar-hide">
-          <Link to="/profile" className="shrink-0 p-1">
-            <Avatar name={profile?.username} url={profile?.photo_url} size={40} ring="danger" />
-          </Link>
+          {(() => {
+            const myTeam = teams.find((t) => t.id === me?.team_id) ?? null;
+            return (
+              <Link to="/profile" className="shrink-0 p-1">
+                <Avatar
+                  name={profile?.username}
+                  url={profile?.photo_url}
+                  size={40}
+                  ring={myTeam ? "none" : "danger"}
+                  ringColor={myTeam?.color ?? null}
+                />
+              </Link>
+            );
+          })()}
           {TABS.map((t) => {
             const active = t === tab && t !== "Activity" && t !== "Players";
             const visible = t !== "Admin" || isHost;
