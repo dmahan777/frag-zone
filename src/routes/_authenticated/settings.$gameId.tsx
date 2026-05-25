@@ -88,6 +88,9 @@ function GameSettingsPage() {
   const [puSpawnFreq, setPuSpawnFreq] = useState<"daily" | "weekly">("daily");
   const [puSpawnCount, setPuSpawnCount] = useState(3);
 
+  const [pointsPerElim, setPointsPerElim] = useState(100);
+  const [puConfig, setPuConfig] = useState<PowerupConfig>(defaultPowerupConfig());
+
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
     if (!g) return;
