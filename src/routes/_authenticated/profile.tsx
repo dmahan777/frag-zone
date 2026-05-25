@@ -88,19 +88,10 @@ function ProfilePage() {
         <div className="mt-3"><StatusBadge status="active" /></div>
       </div>
 
-      {/* Badges */}
-      <div className="mt-6 flex gap-2 overflow-x-auto scrollbar-hide -mx-5 px-5">
-        {["🔥 On Fire", "💀 Veteran", "⚡ Clutch", "👻 Ghost"].map((b) => (
-          <div key={b} className="shrink-0 bg-card border border-border rounded-full px-3 py-1.5 text-xs font-semibold">{b}</div>
-        ))}
-      </div>
-
       {/* Stats grid */}
       <div className="mt-6 grid grid-cols-2 gap-3">
         <StatCard icon={<Skull className="h-4 w-4 text-danger" />} label="Eliminations" value={profile?.stats.kills ?? 0} />
-        <StatCard icon={<Flame className="h-4 w-4 text-primary" />} label="Streak" value={profile?.stats.currentStreak ?? 0} />
         <StatCard icon={<Calendar className="h-4 w-4 text-success" />} label="Days survived" value={profile?.stats.totalSurvivalDays ?? 0} />
-        <StatCard icon={<Trophy className="h-4 w-4 text-secondary" />} label="Games won" value={profile?.stats.gamesWon ?? 0} />
       </div>
 
       <div className="mt-6 space-y-2">
