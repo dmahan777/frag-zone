@@ -14,13 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      clip_comments: {
+        Row: {
+          body: string
+          clip_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          clip_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          clip_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clip_comments_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "clips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clip_likes: {
+        Row: {
+          clip_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          clip_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          clip_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clip_likes_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "clips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clips: {
         Row: {
           caption: string | null
           created_at: string
+          description: string | null
+          eliminated_id: string | null
           game_id: string | null
           id: string
+          kill_type: string
           likes: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           thumbnail_url: string | null
           user_id: string
           video_url: string
@@ -28,9 +92,15 @@ export type Database = {
         Insert: {
           caption?: string | null
           created_at?: string
+          description?: string | null
+          eliminated_id?: string | null
           game_id?: string | null
           id?: string
+          kill_type?: string
           likes?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           thumbnail_url?: string | null
           user_id: string
           video_url: string
@@ -38,9 +108,15 @@ export type Database = {
         Update: {
           caption?: string | null
           created_at?: string
+          description?: string | null
+          eliminated_id?: string | null
           game_id?: string | null
           id?: string
+          kill_type?: string
           likes?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           thumbnail_url?: string | null
           user_id?: string
           video_url?: string
