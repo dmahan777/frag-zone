@@ -127,6 +127,7 @@ function GameSettingsPage() {
     setPuSpawnCount(gg.powerup_spawn_count ?? 3);
     setPointsPerElim((gg as any).points_per_elimination ?? 100);
     setPuConfig(mergeConfig((gg as any).powerup_config));
+    setSpawnArea(((gg as any).powerup_spawn_area as SpawnArea | null) ?? null);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
