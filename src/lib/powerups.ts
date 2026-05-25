@@ -13,7 +13,6 @@ export type PowerupType =
   | "immunity"
   | "ghostMode"
   | "decoy"
-  | "roundPass"
   | "bounty"
   | "selfPurge"
   | "uav"
@@ -27,20 +26,19 @@ export type PowerupMeta = {
   emoji: string;
   scope: PowerupScope;
   short: string;
-  durationMs: number | null; // null = instant / round-bound
+  durationMs: number | null; // null = instant / no duration; otherwise default duration
   defaultCost: number;
 };
 
 export const POWERUPS: PowerupMeta[] = [
   { type: "revive",     name: "Revive",      emoji: "🔄", scope: "personal", short: "Bring an eliminated player back",         durationMs: null,                       defaultCost: 500 },
-  { type: "immunity",   name: "Immunity",    emoji: "🛡️", scope: "personal", short: "Untouchable for 1 hour",                  durationMs: 60 * 60 * 1000,             defaultCost: 400 },
-  { type: "ghostMode",  name: "Ghost Mode",  emoji: "👻", scope: "personal", short: "Hidden from the map for 2 hours",         durationMs: 2 * 60 * 60 * 1000,         defaultCost: 350 },
-  { type: "decoy",      name: "Decoy",       emoji: "🪤", scope: "personal", short: "Fake your zone on others' maps (2h)",     durationMs: 2 * 60 * 60 * 1000,         defaultCost: 300 },
-  { type: "roundPass",  name: "Round Pass",  emoji: "🎟️", scope: "personal", short: "Sit out the next round safely",           durationMs: null,                       defaultCost: 450 },
+  { type: "immunity",   name: "Immunity",    emoji: "🛡️", scope: "personal", short: "Untouchable for a set time",              durationMs: 60 * 60 * 1000,             defaultCost: 400 },
+  { type: "ghostMode",  name: "Ghost Mode",  emoji: "👻", scope: "personal", short: "Hidden from the map for a set time",      durationMs: 2 * 60 * 60 * 1000,         defaultCost: 350 },
+  { type: "decoy",      name: "Decoy",       emoji: "🪤", scope: "personal", short: "Fake your zone on others' maps",          durationMs: 2 * 60 * 60 * 1000,         defaultCost: 300 },
   { type: "bounty",     name: "Bounty",      emoji: "💰", scope: "personal", short: "Put points on a player's head",           durationMs: null,                       defaultCost: 200 },
-  { type: "selfPurge",  name: "Self Purge",  emoji: "☠️", scope: "personal", short: "Open season on you — and you on everyone (1h)", durationMs: 60 * 60 * 1000,       defaultCost: 600 },
-  { type: "uav",        name: "UAV",         emoji: "📡", scope: "team",     short: "Reveal enemy zones for 15 minutes",       durationMs: 15 * 60 * 1000,             defaultCost: 500 },
-  { type: "teamShield", name: "Team Shield", emoji: "🛡️", scope: "team",     short: "Whole team immune for 30 minutes",        durationMs: 30 * 60 * 1000,             defaultCost: 700 },
+  { type: "selfPurge",  name: "Self Purge",  emoji: "☠️", scope: "personal", short: "Open season on you — and you on everyone",durationMs: 60 * 60 * 1000,             defaultCost: 600 },
+  { type: "uav",        name: "UAV",         emoji: "📡", scope: "team",     short: "Reveal enemy zones to your team",         durationMs: 15 * 60 * 1000,             defaultCost: 500 },
+  { type: "teamShield", name: "Team Shield", emoji: "🛡️", scope: "team",     short: "Whole team immune",                       durationMs: 30 * 60 * 1000,             defaultCost: 700 },
 ];
 
 export type PurchaseZone = { north: number; south: number; east: number; west: number };
