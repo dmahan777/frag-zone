@@ -622,3 +622,17 @@ function SliderRow({ label, value, min, max, step = 1, onChange, suffix, classNa
     </div>
   );
 }
+
+function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }: { label: string; value: number; step?: number; min?: number; max?: number; onChange: (v: number) => void }) {
+  const clamp = (n: number) => Math.max(min, Math.min(max, Math.round(n / step) * step));
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => onChange(clamp(value - step))} className="h-8 w-8 rounded-lg bg-card border border-border text-sm font-bold">−</button>
+        <span className="min-w-[64px] text-center text-sm font-bold tabular-nums">{value}</span>
+        <button type="button" onClick={() => onChange(clamp(value + step))} className="h-8 w-8 rounded-lg bg-card border border-border text-sm font-bold">+</button>
+      </div>
+    </div>
+  );
+}
