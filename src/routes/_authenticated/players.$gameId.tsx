@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/players/$gameId")({
 
 type PlayerRow = { id: string; user_id: string; status: string; target_id: string | null; kills: number; team_id: string | null };
 type ProfileLite = { id: string; username: string | null; display_name: string | null; photo_url: string | null };
+type TeamLite = { id: string; name: string; color: string };
 type Filter = "All" | "Active";
 
 function PlayersScreen() {
@@ -17,6 +18,7 @@ function PlayersScreen() {
   const navigate = useNavigate();
   const [players, setPlayers] = useState<PlayerRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileLite>>({});
+  const [teams, setTeams] = useState<Record<string, TeamLite>>({});
   const [gameName, setGameName] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
   const [q, setQ] = useState("");
@@ -28,6 +30,10 @@ function PlayersScreen() {
       const { data: ps } = await supabase.from("players").select("id, user_id, status, target_id, kills, team_id").eq("game_id", gameId);
       const arr = (ps as PlayerRow[]) ?? [];
       setPlayers(arr);
+      const { data: ts } = await supabase.from("teams").select("id, name, color").eq("game_id", gameId);
+      const tmap: Record<string, TeamLite> = {};
+      (ts as TeamLite[] | null)?.forEach((t) => { tmap[t.id] = t; });
+      setTeams(tmap);
       if (arr.length) {
         const ids = Array.from(new Set(arr.map((p) => p.user_id)));
         const { data: profs } = await supabase.from("profiles").select("id, username, display_name, photo_url").in("id", ids);
