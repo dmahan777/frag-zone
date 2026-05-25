@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { reverseGeocodeCity } from "@/lib/geocode.functions";
 import { TeamCreator, MyTeamSection } from "@/components/TeamSections";
 import { PowerupsPanel } from "@/components/PowerupsPanel";
+import { mergeConfig, findMeta, type PowerupConfig } from "@/lib/powerups";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   component: GameScreen,
