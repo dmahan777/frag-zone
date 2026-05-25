@@ -521,7 +521,7 @@ function GameSettingsPage() {
 
       {section === "powerups" && (
         <Panel>
-          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
+          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup, set how long it lasts, and where it can be bought. Prices live in Points & rewards.</p>
           <div className="space-y-3">
             {POWERUPS.map((p) => {
               const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zones: [] };
@@ -534,6 +534,16 @@ function GameSettingsPage() {
                     checked={c.enabled}
                     onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, enabled: v } })}
                   />
+                  {p.durationMs !== null && (
+                    <div className="mt-2 pt-2 border-t border-border/60">
+                      <StepperRow
+                        label="Duration (minutes)"
+                        value={c.durationMinutes ?? Math.round((p.durationMs ?? 0) / 60000)}
+                        step={5} min={1} max={1440}
+                        onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, durationMinutes: v } })}
+                      />
+                    </div>
+                  )}
                   <div className="mt-2 pt-2 border-t border-border/60">
                     <Toggle
                       label="Purchase zones"

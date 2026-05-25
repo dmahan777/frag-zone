@@ -13,7 +13,6 @@ export type PowerupType =
   | "immunity"
   | "ghostMode"
   | "decoy"
-  | "roundPass"
   | "bounty"
   | "selfPurge"
   | "uav"
@@ -27,20 +26,19 @@ export type PowerupMeta = {
   emoji: string;
   scope: PowerupScope;
   short: string;
-  durationMs: number | null; // null = instant / round-bound
+  durationMs: number | null; // null = instant / no duration; otherwise default duration
   defaultCost: number;
 };
 
 export const POWERUPS: PowerupMeta[] = [
   { type: "revive",     name: "Revive",      emoji: "🔄", scope: "personal", short: "Bring an eliminated player back",         durationMs: null,                       defaultCost: 500 },
-  { type: "immunity",   name: "Immunity",    emoji: "🛡️", scope: "personal", short: "Untouchable for 1 hour",                  durationMs: 60 * 60 * 1000,             defaultCost: 400 },
-  { type: "ghostMode",  name: "Ghost Mode",  emoji: "👻", scope: "personal", short: "Hidden from the map for 2 hours",         durationMs: 2 * 60 * 60 * 1000,         defaultCost: 350 },
-  { type: "decoy",      name: "Decoy",       emoji: "🪤", scope: "personal", short: "Fake your zone on others' maps (2h)",     durationMs: 2 * 60 * 60 * 1000,         defaultCost: 300 },
-  { type: "roundPass",  name: "Round Pass",  emoji: "🎟️", scope: "personal", short: "Sit out the next round safely",           durationMs: null,                       defaultCost: 450 },
+  { type: "immunity",   name: "Immunity",    emoji: "🛡️", scope: "personal", short: "Untouchable for a set time",              durationMs: 60 * 60 * 1000,             defaultCost: 400 },
+  { type: "ghostMode",  name: "Ghost Mode",  emoji: "👻", scope: "personal", short: "Hidden from the map for a set time",      durationMs: 2 * 60 * 60 * 1000,         defaultCost: 350 },
+  { type: "decoy",      name: "Decoy",       emoji: "🪤", scope: "personal", short: "Fake your zone on others' maps",          durationMs: 2 * 60 * 60 * 1000,         defaultCost: 300 },
   { type: "bounty",     name: "Bounty",      emoji: "💰", scope: "personal", short: "Put points on a player's head",           durationMs: null,                       defaultCost: 200 },
-  { type: "selfPurge",  name: "Self Purge",  emoji: "☠️", scope: "personal", short: "Open season on you — and you on everyone (1h)", durationMs: 60 * 60 * 1000,       defaultCost: 600 },
-  { type: "uav",        name: "UAV",         emoji: "📡", scope: "team",     short: "Reveal enemy zones for 15 minutes",       durationMs: 15 * 60 * 1000,             defaultCost: 500 },
-  { type: "teamShield", name: "Team Shield", emoji: "🛡️", scope: "team",     short: "Whole team immune for 30 minutes",        durationMs: 30 * 60 * 1000,             defaultCost: 700 },
+  { type: "selfPurge",  name: "Self Purge",  emoji: "☠️", scope: "personal", short: "Open season on you — and you on everyone",durationMs: 60 * 60 * 1000,             defaultCost: 600 },
+  { type: "uav",        name: "UAV",         emoji: "📡", scope: "team",     short: "Reveal enemy zones to your team",         durationMs: 15 * 60 * 1000,             defaultCost: 500 },
+  { type: "teamShield", name: "Team Shield", emoji: "🛡️", scope: "team",     short: "Whole team immune",                       durationMs: 30 * 60 * 1000,             defaultCost: 700 },
 ];
 
 export type PurchaseZone = { north: number; south: number; east: number; west: number };
@@ -48,6 +46,8 @@ export type PowerupConfigEntry = {
   enabled: boolean;
   cost: number;
   scope: PowerupScope;
+  /** Override duration in minutes. If undefined, falls back to meta.durationMs. */
+  durationMinutes?: number;
   zoneEnabled?: boolean;
   zones?: PurchaseZone[];
   /** @deprecated single-zone legacy field; migrated to zones[] */
@@ -74,6 +74,7 @@ export const mergeConfig = (raw: any): PowerupConfig => {
         enabled: c.enabled !== false,
         cost: Number.isFinite(c.cost) ? Math.max(0, Math.round(c.cost)) : p.defaultCost,
         scope: p.scope,
+        durationMinutes: Number.isFinite(c.durationMinutes) ? Math.max(1, Math.round(c.durationMinutes)) : undefined,
         zoneEnabled: !!c.zoneEnabled,
         zones,
       };
@@ -123,11 +124,16 @@ type ActivateOpts = {
   active: Record<string, any>;
   username: string;
   extra?: { targetId?: string; bountyPoints?: number; fakeZone?: string };
+  /** Optional configured duration override in ms. Falls back to meta.durationMs. */
+  durationMsOverride?: number | null;
 };
 
 export async function activatePowerup(opts: ActivateOpts) {
-  const { playerId, userId, gameId, teamId, type, inventory, active, username, extra } = opts;
+  const { playerId, userId, gameId, teamId, type, inventory, active, username, extra, durationMsOverride } = opts;
   const meta = findMeta(type);
+  const durationMs = (typeof durationMsOverride === "number" && durationMsOverride > 0)
+    ? durationMsOverride
+    : meta.durationMs;
 
   if ((inventory[type] ?? 0) <= 0) throw new Error("You don't own that power-up");
   if (isActive(active, type)) throw new Error("Already active");
@@ -143,22 +149,18 @@ export async function activatePowerup(opts: ActivateOpts) {
 
   switch (type) {
     case "immunity":
-      newActive.immunity = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
+      newActive.immunity = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
       extraPlayerPatch.status = "safe";
       break;
     case "ghostMode":
-      newActive.ghostMode = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
+      newActive.ghostMode = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
       break;
     case "decoy":
       newActive.decoy = {
         active: true,
-        expiresAt: new Date(now + meta.durationMs!).toISOString(),
+        expiresAt: new Date(now + durationMs!).toISOString(),
         fakeZone: extra?.fakeZone ?? "Unknown Zone",
       };
-      break;
-    case "roundPass":
-      newActive.roundPass = { active: true, roundNumber: extra?.bountyPoints /* not used */ ?? 0 };
-      extraPlayerPatch.status = "safe";
       break;
     case "bounty":
       if (!extra?.targetId || !extra?.bountyPoints) throw new Error("Pick a target and amount");
@@ -166,11 +168,11 @@ export async function activatePowerup(opts: ActivateOpts) {
       feedMsg = `💰 @${username} placed a ${extra.bountyPoints}pt bounty`;
       break;
     case "selfPurge":
-      newActive.selfPurge = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
-      feedMsg = `☠️ PURGE — @${username} is open season for 1 hour!`;
+      newActive.selfPurge = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
+      feedMsg = `☠️ PURGE — @${username} is open season!`;
       break;
     case "uav":
-      newActive.uav = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString(), activatedBy: userId };
+      newActive.uav = { active: true, expiresAt: new Date(now + durationMs!).toISOString(), activatedBy: userId };
       // Propagate to all teammates
       if (teamId) {
         await supabase.from("players").update({
@@ -181,7 +183,7 @@ export async function activatePowerup(opts: ActivateOpts) {
       break;
     case "teamShield":
       if (!teamId) throw new Error("You need a team");
-      newActive.teamShield = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString(), teamId };
+      newActive.teamShield = { active: true, expiresAt: new Date(now + durationMs!).toISOString(), teamId };
       // Mark all teammates safe
       await supabase.from("players").update({ status: "safe" } as never)
         .eq("game_id", gameId).eq("team_id", teamId);

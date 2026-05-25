@@ -91,10 +91,14 @@ export function PowerupsPanel({ gameId, userId, username }: Props) {
         if (!zone) return;
         extra = { fakeZone: zone };
       }
+      const cfgEntry = cfg[type];
+      const durationMsOverride = (cfgEntry?.durationMinutes && cfgEntry.durationMinutes > 0)
+        ? cfgEntry.durationMinutes * 60 * 1000
+        : null;
       await activatePowerup({
         playerId: player.id, userId, gameId, teamId: player.team_id,
         type, inventory: player.powerup_inventory ?? {}, active: player.powerup_active ?? {},
-        username: username ?? "player", extra,
+        username: username ?? "player", extra, durationMsOverride,
       });
       toast.success(`${findMeta(type).name} activated`);
       load();
