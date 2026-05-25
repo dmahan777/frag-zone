@@ -470,7 +470,6 @@ export type Database = {
           id: string
           is_premium: boolean
           onboarded: boolean
-          phone: string | null
           photo_url: string | null
           school: string | null
           stats: Json
@@ -484,7 +483,6 @@ export type Database = {
           id: string
           is_premium?: boolean
           onboarded?: boolean
-          phone?: string | null
           photo_url?: string | null
           school?: string | null
           stats?: Json
@@ -498,11 +496,28 @@ export type Database = {
           id?: string
           is_premium?: boolean
           onboarded?: boolean
-          phone?: string | null
           photo_url?: string | null
           school?: string | null
           stats?: Json
           username?: string | null
+        }
+        Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          phone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
