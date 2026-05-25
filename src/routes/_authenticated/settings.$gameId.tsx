@@ -122,6 +122,8 @@ function GameSettingsPage() {
     setPuSpawnRadius(gg.powerup_spawn_radius_m ?? 500);
     setPuSpawnFreq((gg.powerup_spawn_frequency as "daily" | "weekly") ?? "daily");
     setPuSpawnCount(gg.powerup_spawn_count ?? 3);
+    setPointsPerElim((gg as any).points_per_elimination ?? 100);
+    setPuConfig(mergeConfig((gg as any).powerup_config));
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
