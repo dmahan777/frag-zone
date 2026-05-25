@@ -592,6 +592,12 @@ function GameSettingsPage() {
           </div>
         </Panel>
       )}
+      <SpawnAreaDrawer
+        open={drawerOpen}
+        initial={spawnArea}
+        onClose={() => setDrawerOpen(false)}
+        onSave={(a) => setSpawnArea(a)}
+      />
     </div>
   );
 }
