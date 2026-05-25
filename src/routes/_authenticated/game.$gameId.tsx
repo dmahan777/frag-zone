@@ -563,9 +563,16 @@ function PlayersSection({ players, profilesById, meId, meTargetId, teams, gameId
                 {members.map((p) => {
                   const prof = profilesById[p.user_id];
                   const ring = ringFor(p);
+                  const eliminated = p.status !== "active";
                   return (
                     <div key={p.id} className="flex flex-col items-center gap-1.5">
-                      <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={ring} />
+                      <Avatar
+                        name={prof?.username}
+                        url={prof?.photo_url}
+                        size={64}
+                        ring={team && !eliminated ? "none" : ring}
+                        ringColor={team && !eliminated ? team.color : null}
+                      />
                       <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
                     </div>
                   );
