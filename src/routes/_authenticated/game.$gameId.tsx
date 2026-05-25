@@ -158,7 +158,6 @@ function GameScreen() {
   const mapZones = useMemo(() => {
     if (!powerupConfig) return [];
     const out: { north: number; south: number; east: number; west: number; color?: string; label?: string }[] = [];
-    for (const meta of Object.values(powerupConfig) as any[]) {}
     (Object.keys(powerupConfig) as Array<keyof PowerupConfig>).forEach((k) => {
       const cfg = powerupConfig[k];
       if (!cfg?.enabled || !cfg.zoneEnabled || !cfg.zones?.length) return;
