@@ -171,6 +171,15 @@ function PlayersScreen() {
                           )}
                         </div>
                         <p className="mt-2 text-sm font-semibold text-center truncate w-full">{name}</p>
+                        {team && (
+                          <span
+                            className="mt-1 inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border"
+                            style={{ color: team.color, borderColor: team.color, background: `${team.color}1a` }}
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: team.color }} />
+                            <span className="truncate">{team.name}</span>
+                          </span>
+                        )}
                       </div>
                     );
                   })}
