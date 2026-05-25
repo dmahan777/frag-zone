@@ -29,7 +29,7 @@ function Onboarding() {
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
-    if (!loading && profile?.onboarded) navigate({ to: "/home" });
+    if (!loading && profile?.onboarded) navigate({ to: "/menu" });
   }, [user, profile, loading, navigate]);
 
   const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +79,7 @@ function Onboarding() {
       if (error) throw error;
       await refreshProfile();
       toast.success("You're in. Let's play.");
-      navigate({ to: "/home" });
+      navigate({ to: "/menu" });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
