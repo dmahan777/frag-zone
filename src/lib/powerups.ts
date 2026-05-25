@@ -74,6 +74,7 @@ export const mergeConfig = (raw: any): PowerupConfig => {
         enabled: c.enabled !== false,
         cost: Number.isFinite(c.cost) ? Math.max(0, Math.round(c.cost)) : p.defaultCost,
         scope: p.scope,
+        durationMinutes: Number.isFinite(c.durationMinutes) ? Math.max(1, Math.round(c.durationMinutes)) : undefined,
         zoneEnabled: !!c.zoneEnabled,
         zones,
       };
