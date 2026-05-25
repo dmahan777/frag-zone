@@ -26,6 +26,7 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedSettingsGameIdRouteImport } from './routes/_authenticated/settings.$gameId'
 import { Route as AuthenticatedPlayersGameIdRouteImport } from './routes/_authenticated/players.$gameId'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
+import { Route as AuthenticatedClipsNewRouteImport } from './routes/_authenticated/clips.new'
 import { Route as AuthenticatedAdminGameIdRouteImport } from './routes/_authenticated/admin.$gameId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -115,6 +116,11 @@ const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   path: '/game/$gameId',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedClipsNewRoute = AuthenticatedClipsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedClipsRoute,
+} as any)
 const AuthenticatedAdminGameIdRoute =
   AuthenticatedAdminGameIdRouteImport.update({
     id: '/admin/$gameId',
@@ -127,7 +133,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/chat': typeof AuthenticatedChatRoute
-  '/clips': typeof AuthenticatedClipsRoute
+  '/clips': typeof AuthenticatedClipsRouteWithChildren
   '/feed': typeof AuthenticatedFeedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/clips/new': typeof AuthenticatedClipsNewRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/players/$gameId': typeof AuthenticatedPlayersGameIdRoute
   '/settings/$gameId': typeof AuthenticatedSettingsGameIdRoute
@@ -146,7 +153,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/chat': typeof AuthenticatedChatRoute
-  '/clips': typeof AuthenticatedClipsRoute
+  '/clips': typeof AuthenticatedClipsRouteWithChildren
   '/feed': typeof AuthenticatedFeedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/clips/new': typeof AuthenticatedClipsNewRoute
   '/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/players/$gameId': typeof AuthenticatedPlayersGameIdRoute
   '/settings/$gameId': typeof AuthenticatedSettingsGameIdRoute
@@ -167,7 +175,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
-  '/_authenticated/clips': typeof AuthenticatedClipsRoute
+  '/_authenticated/clips': typeof AuthenticatedClipsRouteWithChildren
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/target': typeof AuthenticatedTargetRoute
   '/_authenticated/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
+  '/_authenticated/clips/new': typeof AuthenticatedClipsNewRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/_authenticated/players/$gameId': typeof AuthenticatedPlayersGameIdRoute
   '/_authenticated/settings/$gameId': typeof AuthenticatedSettingsGameIdRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/target'
     | '/admin/$gameId'
+    | '/clips/new'
     | '/game/$gameId'
     | '/players/$gameId'
     | '/settings/$gameId'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/target'
     | '/admin/$gameId'
+    | '/clips/new'
     | '/game/$gameId'
     | '/players/$gameId'
     | '/settings/$gameId'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/target'
     | '/_authenticated/admin/$gameId'
+    | '/_authenticated/clips/new'
     | '/_authenticated/game/$gameId'
     | '/_authenticated/players/$gameId'
     | '/_authenticated/settings/$gameId'
@@ -370,6 +382,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameGameIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/clips/new': {
+      id: '/_authenticated/clips/new'
+      path: '/new'
+      fullPath: '/clips/new'
+      preLoaderRoute: typeof AuthenticatedClipsNewRouteImport
+      parentRoute: typeof AuthenticatedClipsRoute
+    }
     '/_authenticated/admin/$gameId': {
       id: '/_authenticated/admin/$gameId'
       path: '/admin/$gameId'
@@ -379,6 +398,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedClipsRouteChildren {
+  AuthenticatedClipsNewRoute: typeof AuthenticatedClipsNewRoute
+}
+
+const AuthenticatedClipsRouteChildren: AuthenticatedClipsRouteChildren = {
+  AuthenticatedClipsNewRoute: AuthenticatedClipsNewRoute,
+}
+
+const AuthenticatedClipsRouteWithChildren =
+  AuthenticatedClipsRoute._addFileChildren(AuthenticatedClipsRouteChildren)
 
 interface AuthenticatedPlayersRouteChildren {
   AuthenticatedPlayersGameIdRoute: typeof AuthenticatedPlayersGameIdRoute
@@ -393,7 +423,7 @@ const AuthenticatedPlayersRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
-  AuthenticatedClipsRoute: typeof AuthenticatedClipsRoute
+  AuthenticatedClipsRoute: typeof AuthenticatedClipsRouteWithChildren
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
@@ -409,7 +439,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedChatRoute: AuthenticatedChatRoute,
-  AuthenticatedClipsRoute: AuthenticatedClipsRoute,
+  AuthenticatedClipsRoute: AuthenticatedClipsRouteWithChildren,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
