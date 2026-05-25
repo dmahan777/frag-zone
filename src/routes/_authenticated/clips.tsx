@@ -53,8 +53,8 @@ function ClipsPage() {
         ? supabase.from("games").select("id,name,host_id").in("id", gameIds)
         : Promise.resolve({ data: [] as any[] } as any),
     ]);
-    const profileById = new Map((profiles ?? []).map((p: any) => [p.id, p]));
-    const gameById = new Map((games ?? []).map((g: any) => [g.id, g]));
+    const profileById = new Map<string, ProfileLite>((profiles ?? []).map((p: any) => [p.id, p as ProfileLite]));
+    const gameById = new Map<string, { id: string; name: string; host_id: string }>((games ?? []).map((g: any) => [g.id, g]));
 
     setClips(arr.map((c) => ({
       ...c,
