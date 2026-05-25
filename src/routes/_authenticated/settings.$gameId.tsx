@@ -93,6 +93,7 @@ function GameSettingsPage() {
   const [puConfig, setPuConfig] = useState<PowerupConfig>(defaultPowerupConfig());
   const [spawnArea, setSpawnArea] = useState<SpawnArea | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [zoneDrawerFor, setZoneDrawerFor] = useState<string | null>(null);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
