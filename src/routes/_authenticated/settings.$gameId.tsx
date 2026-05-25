@@ -179,6 +179,8 @@ function GameSettingsPage() {
       powerup_spawn_radius_m: Math.max(50, Math.min(20000, Math.round(puSpawnRadius))),
       powerup_spawn_frequency: puSpawnFreq,
       powerup_spawn_count: Math.max(1, Math.min(50, Math.round(puSpawnCount))),
+      points_per_elimination: Math.max(0, Math.min(10000, Math.round(pointsPerElim / 50) * 50)),
+      powerup_config: puConfig as any,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
