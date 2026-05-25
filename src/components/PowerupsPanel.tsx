@@ -21,11 +21,25 @@ export function PowerupsPanel({ gameId, userId, username }: Props) {
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [tab, setTab] = useState<Tab>("personal");
   const [now, setNow] = useState(Date.now());
+  const [myLoc, setMyLoc] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     const i = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(i);
   }, []);
+
+  useEffect(() => {
+    const fetchLoc = async () => {
+      const { data } = await supabase.from("player_locations").select("lat,lng")
+        .eq("game_id", gameId).eq("user_id", userId).maybeSingle();
+      if (data) setMyLoc({ lat: data.lat, lng: data.lng });
+    };
+    fetchLoc();
+    const ch = supabase.channel(`loc-${gameId}-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "player_locations", filter: `user_id=eq.${userId}` }, fetchLoc)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [gameId, userId]);
 
   const load = async () => {
     const { data: p } = await supabase.from("players").select("*").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
