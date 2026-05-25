@@ -15,8 +15,11 @@ type MapMarker = {
   ringColor?: string; // hex
 };
 
+export type MapZone = { north: number; south: number; east: number; west: number; color?: string; label?: string };
+
 type Props = {
   markers?: MapMarker[];
+  zones?: MapZone[];
   center?: { lat: number; lng: number };
   zoom?: number;
   className?: string;
@@ -107,10 +110,13 @@ function clusterIcon(count: number) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-export function GoogleMap({ markers = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
+export function GoogleMap({ markers = [], zones = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerObjs = useRef<any[]>([]);
+  const zoneObjs = useRef<any[]>([]);
+  const didFitRef = useRef(false);
+  const userInteractedRef = useRef(false);
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -131,12 +137,17 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
           gestureHandling: "greedy",
           backgroundColor: "var(--map-fallback)",
         });
+        mapRef.current.addListener("dragstart", () => { userInteractedRef.current = true; });
+        mapRef.current.addListener("zoom_changed", () => {
+          // Only flag user interaction after initial settle
+          if (didFitRef.current) userInteractedRef.current = true;
+        });
         // Trigger a resize once the container has its final size — fixes blank tiles
         // when the map is initialized inside a freshly-mounted flex/absolute parent.
         const fire = () => {
           if (!mapRef.current) return;
           google.maps.event.trigger(mapRef.current, "resize");
-          mapRef.current.setCenter(fallbackCenter);
+          if (!userInteractedRef.current) mapRef.current.setCenter(fallbackCenter);
         };
         requestAnimationFrame(fire);
         setTimeout(fire, 300);
@@ -154,6 +165,30 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Recenter when `center` prop changes (until the user interacts with the map)
+  useEffect(() => {
+    if (!mapRef.current || !center) return;
+    if (userInteractedRef.current) return;
+    mapRef.current.panTo(center);
+  }, [center?.lat, center?.lng]);
+
+  // Render purchase zones
+  useEffect(() => {
+    const google = (window as any).google;
+    if (!mapRef.current || !google?.maps) return;
+    zoneObjs.current.forEach((r) => r.setMap(null));
+    zoneObjs.current = zones.map((z) => new google.maps.Rectangle({
+      bounds: { north: z.north, south: z.south, east: z.east, west: z.west },
+      strokeColor: z.color ?? "#FF5FA0",
+      strokeWeight: 2,
+      fillColor: z.color ?? "#FF5FA0",
+      fillOpacity: 0.15,
+      clickable: false,
+      map: mapRef.current,
+    }));
+  }, [zones]);
+
 
   // Re-render markers
   useEffect(() => {
@@ -213,10 +248,11 @@ export function GoogleMap({ markers = [], center, zoom = 15, className = "", onM
         mapRef.current.panTo({ lat: target.lat, lng: target.lng });
         mapRef.current.setZoom(18);
       }
-    } else if (markers.length > 0) {
+    } else if (markers.length > 0 && !didFitRef.current && !userInteractedRef.current) {
       const bounds = new google.maps.LatLngBounds();
       markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
       mapRef.current.fitBounds(bounds, 80);
+      didFitRef.current = true;
       const listener = google.maps.event.addListenerOnce(mapRef.current, "idle", () => {
         if (mapRef.current.getZoom() > 17) mapRef.current.setZoom(17);
       });

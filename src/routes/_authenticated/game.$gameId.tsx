@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { reverseGeocodeCity } from "@/lib/geocode.functions";
 import { TeamCreator, MyTeamSection } from "@/components/TeamSections";
 import { PowerupsPanel } from "@/components/PowerupsPanel";
+import { mergeConfig, findMeta, type PowerupConfig } from "@/lib/powerups";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   component: GameScreen,
@@ -39,11 +40,13 @@ function GameScreen() {
   const [locations, setLocations] = useState<Record<string, { lat: number; lng: number; speed?: number | null; battery?: number | null; updated_at?: string }>>({});
   const [focusId, setFocusId] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamRow[]>([]);
+  const [powerupConfig, setPowerupConfig] = useState<PowerupConfig | null>(null);
   const myPos = useLiveLocation(gameId, user?.id);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
     setGame(g as GameRow);
+    setPowerupConfig(mergeConfig((g as any)?.powerup_config));
     const { data: ps } = await supabase.from("players").select("id, user_id, status, target_id, kills, team_id").eq("game_id", gameId);
     const arr = (ps as PlayerRow[]) ?? [];
     setPlayers(arr);
@@ -152,6 +155,18 @@ function GameScreen() {
     return out;
   }, [myPos, user, profile, locations, players, profilesById, targets, teamColorById, myTeamColor]);
 
+  const mapZones = useMemo(() => {
+    if (!powerupConfig) return [];
+    const out: { north: number; south: number; east: number; west: number; color?: string; label?: string }[] = [];
+    (Object.keys(powerupConfig) as Array<keyof PowerupConfig>).forEach((k) => {
+      const cfg = powerupConfig[k];
+      if (!cfg?.enabled || !cfg.zoneEnabled || !cfg.zones?.length) return;
+      const m = findMeta(k);
+      cfg.zones.forEach((z) => out.push({ ...z, color: "#FF5FA0", label: `${m.emoji} ${m.name}` }));
+    });
+    return out;
+  }, [powerupConfig]);
+
   const isHost = game?.host_id === user?.id;
 
   const onShare = async () => {
@@ -184,7 +199,7 @@ function GameScreen() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Map area */}
       <div className="relative w-full h-[72vh] min-h-[500px]">
-        <GoogleMap markers={markers} center={center} className="absolute inset-0" onMarkerClick={(id) => setFocusId(id)} focusId={focusId} />
+        <GoogleMap markers={markers} zones={mapZones} center={center} className="absolute inset-0" onMarkerClick={(id) => setFocusId(id)} focusId={focusId} />
 
         {/* Top-left floating controls */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
