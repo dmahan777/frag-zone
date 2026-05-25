@@ -161,7 +161,7 @@ function PlayersScreen() {
                             name={name}
                             url={pr?.photo_url}
                             size={60}
-                            ring={eliminated ? "danger" : (color ? "none" : "primary")}
+                            ring={eliminated ? "danger" : "none"}
                             ringColor={!eliminated ? color : null}
                           />
                           {eliminated && (

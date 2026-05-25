@@ -158,7 +158,7 @@ function PlayerRow({ row, rank, compact, teamColor }: { row: Row; rank?: number;
         name={name}
         url={row.profile?.photo_url ?? null}
         size={40}
-        ring={teamColor ? "none" : "primary"}
+        ring="none"
         ringColor={teamColor ?? null}
       />
       <div className="flex-1 min-w-0">

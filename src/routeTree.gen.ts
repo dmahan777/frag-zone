@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTargetRouteImport } from './routes/_authenticated/target'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedPlayersRouteImport } from './routes/_authenticated/players'
 import { Route as AuthenticatedMenuRouteImport } from './routes/_authenticated/menu'
@@ -51,6 +52,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedTargetRoute = AuthenticatedTargetRouteImport.update({
   id: '/target',
   path: '/target',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -101,9 +107,9 @@ const AuthenticatedChatRoute = AuthenticatedChatRouteImport.update({
 } as any)
 const AuthenticatedSettingsGameIdRoute =
   AuthenticatedSettingsGameIdRouteImport.update({
-    id: '/settings/$gameId',
-    path: '/settings/$gameId',
-    getParentRoute: () => AuthenticatedRoute,
+    id: '/$gameId',
+    path: '/$gameId',
+    getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
 const AuthenticatedPlayersGameIdRoute =
   AuthenticatedPlayersGameIdRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof AuthenticatedMenuRoute
   '/players': typeof AuthenticatedPlayersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
   '/clips/new': typeof AuthenticatedClipsNewRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/menu': typeof AuthenticatedMenuRoute
   '/players': typeof AuthenticatedPlayersRouteWithChildren
   '/profile': typeof AuthenticatedProfileRoute
+  '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/target': typeof AuthenticatedTargetRoute
   '/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
   '/clips/new': typeof AuthenticatedClipsNewRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/_authenticated/menu': typeof AuthenticatedMenuRoute
   '/_authenticated/players': typeof AuthenticatedPlayersRouteWithChildren
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/target': typeof AuthenticatedTargetRoute
   '/_authenticated/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
   '/_authenticated/clips_/new': typeof AuthenticatedClipsNewRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/players'
     | '/profile'
+    | '/settings'
     | '/target'
     | '/admin/$gameId'
     | '/clips/new'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/players'
     | '/profile'
+    | '/settings'
     | '/target'
     | '/admin/$gameId'
     | '/clips/new'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/menu'
     | '/_authenticated/players'
     | '/_authenticated/profile'
+    | '/_authenticated/settings'
     | '/_authenticated/target'
     | '/_authenticated/admin/$gameId'
     | '/_authenticated/clips_/new'
@@ -296,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/target'
       fullPath: '/target'
       preLoaderRoute: typeof AuthenticatedTargetRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile': {
@@ -363,10 +382,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/settings/$gameId': {
       id: '/_authenticated/settings/$gameId'
-      path: '/settings/$gameId'
+      path: '/$gameId'
       fullPath: '/settings/$gameId'
       preLoaderRoute: typeof AuthenticatedSettingsGameIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedSettingsRoute
     }
     '/_authenticated/players/$gameId': {
       id: '/_authenticated/players/$gameId'
@@ -410,6 +429,19 @@ const AuthenticatedPlayersRouteChildren: AuthenticatedPlayersRouteChildren = {
 const AuthenticatedPlayersRouteWithChildren =
   AuthenticatedPlayersRoute._addFileChildren(AuthenticatedPlayersRouteChildren)
 
+interface AuthenticatedSettingsRouteChildren {
+  AuthenticatedSettingsGameIdRoute: typeof AuthenticatedSettingsGameIdRoute
+}
+
+const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
+  AuthenticatedSettingsGameIdRoute: AuthenticatedSettingsGameIdRoute,
+}
+
+const AuthenticatedSettingsRouteWithChildren =
+  AuthenticatedSettingsRoute._addFileChildren(
+    AuthenticatedSettingsRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
   AuthenticatedClipsRoute: typeof AuthenticatedClipsRoute
@@ -420,11 +452,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMenuRoute: typeof AuthenticatedMenuRoute
   AuthenticatedPlayersRoute: typeof AuthenticatedPlayersRouteWithChildren
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedTargetRoute: typeof AuthenticatedTargetRoute
   AuthenticatedAdminGameIdRoute: typeof AuthenticatedAdminGameIdRoute
   AuthenticatedClipsNewRoute: typeof AuthenticatedClipsNewRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
-  AuthenticatedSettingsGameIdRoute: typeof AuthenticatedSettingsGameIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -437,11 +469,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMenuRoute: AuthenticatedMenuRoute,
   AuthenticatedPlayersRoute: AuthenticatedPlayersRouteWithChildren,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedTargetRoute: AuthenticatedTargetRoute,
   AuthenticatedAdminGameIdRoute: AuthenticatedAdminGameIdRoute,
   AuthenticatedClipsNewRoute: AuthenticatedClipsNewRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
-  AuthenticatedSettingsGameIdRoute: AuthenticatedSettingsGameIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
