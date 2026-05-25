@@ -871,30 +871,3 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
     </Panel>
   );
 }
-
-      <button disabled={busy} onClick={post}
-        className="mt-3 w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary text-primary-foreground text-sm font-extrabold disabled:opacity-50">
-        Post event
-      </button>
-
-      <div className="mt-5 pt-4 border-t border-border">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Recent events</p>
-        {events.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No events yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {events.map((e) => (
-              <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Event</span>
-                  <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
-                </div>
-                <p className="text-sm mt-0.5 whitespace-pre-line">{e.message}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </Panel>
-  );
-}
