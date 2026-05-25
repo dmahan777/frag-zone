@@ -185,7 +185,7 @@ export function MyTeamSection({ gameId, meId, myPlayerId, myTeamId, teams, playe
             const prof = profilesById[p.user_id];
             return (
               <div key={p.id} className="flex flex-col items-center gap-1.5">
-                <Avatar name={prof?.username} url={prof?.photo_url} size={64} ring={p.user_id === meId ? "primary" : "none"} />
+                <Avatar name={prof?.username} url={prof?.photo_url} size={64} ringColor={myTeam.color} />
                 <span className="text-xs text-foreground/90 truncate max-w-full">{prof?.username ?? "player"}</span>
                 <span className="text-[10px] text-muted-foreground">{p.kills} kills</span>
               </div>
