@@ -46,6 +46,8 @@ export type PowerupConfigEntry = {
   enabled: boolean;
   cost: number;
   scope: PowerupScope;
+  /** Override duration in minutes. If undefined, falls back to meta.durationMs. */
+  durationMinutes?: number;
   zoneEnabled?: boolean;
   zones?: PurchaseZone[];
   /** @deprecated single-zone legacy field; migrated to zones[] */
