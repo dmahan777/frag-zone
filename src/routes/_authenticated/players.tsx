@@ -127,20 +127,10 @@ function PlayersPage() {
             const color = team?.color ?? null;
             return (
               <section key={teamKey}>
-                <div className="flex items-center gap-3 mb-3">
-                  {color && (
-                    <span
-                      className="h-6 w-6 rounded-full border border-border shrink-0"
-                      style={{ background: color }}
-                    />
-                  )}
-                  <h2
-                    className="font-display font-extrabold text-4xl tracking-tight"
-                    style={color ? { color } : undefined}
-                  >
+                <div className="mb-3">
+                  <h2 className="font-display font-semibold text-4xl tracking-tight text-white">
                     {label}
                   </h2>
-                  <span className="text-xs text-muted-foreground">({members.length})</span>
                 </div>
                 <div className="space-y-2">
                   {members.map((r, i) => (
