@@ -6,7 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { ArrowLeft, Upload, Video, Loader2, Crosshair, Flame, DollarSign, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/clips/new")({
+export const Route = createFileRoute("/_authenticated/clips_/new")({
   component: NewClipPage,
 });
 
