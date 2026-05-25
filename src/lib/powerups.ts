@@ -43,12 +43,19 @@ export const POWERUPS: PowerupMeta[] = [
   { type: "teamShield", name: "Team Shield", emoji: "🛡️", scope: "team",     short: "Whole team immune for 30 minutes",        durationMs: 30 * 60 * 1000,             defaultCost: 700 },
 ];
 
-export type PowerupConfigEntry = { enabled: boolean; cost: number; scope: PowerupScope };
+export type PurchaseZone = { north: number; south: number; east: number; west: number };
+export type PowerupConfigEntry = {
+  enabled: boolean;
+  cost: number;
+  scope: PowerupScope;
+  zoneEnabled?: boolean;
+  zone?: PurchaseZone | null;
+};
 export type PowerupConfig = Record<PowerupType, PowerupConfigEntry>;
 
 export const defaultPowerupConfig = (): PowerupConfig => {
   const out = {} as PowerupConfig;
-  for (const p of POWERUPS) out[p.type] = { enabled: true, cost: p.defaultCost, scope: p.scope };
+  for (const p of POWERUPS) out[p.type] = { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zone: null };
   return out;
 };
 
@@ -62,10 +69,18 @@ export const mergeConfig = (raw: any): PowerupConfig => {
         enabled: c.enabled !== false,
         cost: Number.isFinite(c.cost) ? Math.max(0, Math.round(c.cost)) : p.defaultCost,
         scope: p.scope,
+        zoneEnabled: !!c.zoneEnabled,
+        zone: c.zone && typeof c.zone === "object" ? c.zone : null,
       };
     }
   }
   return d;
+};
+
+// Returns true if a lat/lng is inside the purchase zone (or no zone enforced)
+export const isInZone = (zone: PurchaseZone | null | undefined, lat: number, lng: number): boolean => {
+  if (!zone) return true;
+  return lat <= zone.north && lat >= zone.south && lng <= zone.east && lng >= zone.west;
 };
 
 // Returns ms remaining or 0 if expired/not active
