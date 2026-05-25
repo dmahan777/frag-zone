@@ -7,6 +7,7 @@ import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, 
 import { assignTargetsForGame } from "@/lib/assign-targets";
 import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
 import { SpawnAreaDrawer, type SpawnArea } from "@/components/SpawnAreaDrawer";
+import { MultiZoneDrawer, type Zone } from "@/components/MultiZoneDrawer";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -523,7 +524,8 @@ function GameSettingsPage() {
           <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
           <div className="space-y-3">
             {POWERUPS.map((p) => {
-              const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zone: null };
+              const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zones: [] };
+              const zones = c.zones ?? [];
               return (
                 <div key={p.type} className="bg-card border border-border rounded-2xl p-3">
                   <Toggle
@@ -534,8 +536,8 @@ function GameSettingsPage() {
                   />
                   <div className="mt-2 pt-2 border-t border-border/60">
                     <Toggle
-                      label="Purchase zone"
-                      hint="Players must be inside a drawn square to buy this powerup."
+                      label="Purchase zones"
+                      hint="Players must be inside one of the drawn squares to buy this powerup."
                       checked={!!c.zoneEnabled}
                       onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, zoneEnabled: v } })}
                     />
@@ -543,10 +545,10 @@ function GameSettingsPage() {
                       <div className="mt-2 flex items-center gap-2">
                         <button onClick={() => setZoneDrawerFor(p.type)}
                           className="flex-1 h-9 rounded-lg bg-background border border-border text-xs font-semibold px-3 text-left">
-                          {c.zone ? "Edit zone square" : "Draw zone on map"}
+                          {zones.length > 0 ? `Edit zones (${zones.length})` : "Draw zones on map"}
                         </button>
-                        {c.zone && (
-                          <button onClick={() => setPuConfig({ ...puConfig, [p.type]: { ...c, zone: null } })}
+                        {zones.length > 0 && (
+                          <button onClick={() => setPuConfig({ ...puConfig, [p.type]: { ...c, zones: [] } })}
                             className="text-[11px] text-danger px-2">Clear</button>
                         )}
                       </div>
@@ -629,14 +631,14 @@ function GameSettingsPage() {
         onClose={() => setDrawerOpen(false)}
         onSave={(a) => setSpawnArea(a)}
       />
-      <SpawnAreaDrawer
+      <MultiZoneDrawer
         open={!!zoneDrawerFor}
-        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zone ?? null) : null}
+        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zones ?? []) : []}
         onClose={() => setZoneDrawerFor(null)}
-        onSave={(a) => {
+        onSave={(zs: Zone[]) => {
           if (!zoneDrawerFor) return;
           const key = zoneDrawerFor as keyof PowerupConfig;
-          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zone: a } });
+          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zones: zs } });
         }}
       />
     </div>
@@ -700,18 +702,11 @@ function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }:
   );
 }
 
-const EVENT_TYPES: { value: string; label: string; emoji: string }[] = [
-  { value: "purge", label: "Purge started", emoji: "☠️" },
-  { value: "round", label: "Round update", emoji: "🏁" },
-  { value: "powerup", label: "Powerup drop", emoji: "⚡" },
-  { value: "spawn", label: "Spawn event", emoji: "📍" },
-  { value: "end", label: "Game end", emoji: "🏆" },
-  { value: "custom", label: "Custom announcement", emoji: "📣" },
-];
-
 function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
-  const [type, setType] = useState("custom");
-  const [message, setMessage] = useState("");
+  const [description, setDescription] = useState("");
+  const [rewardKind, setRewardKind] = useState<"points" | "item">("points");
+  const [rewardPoints, setRewardPoints] = useState(100);
+  const [rewardItem, setRewardItem] = useState("");
   const [events, setEvents] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -722,41 +717,76 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
 
   const post = async () => {
-    const text = message.trim();
-    if (!text) { toast.error("Write a message first"); return; }
+    const desc = description.trim();
+    if (!desc) { toast.error("Add a description"); return; }
+    let reward = "";
+    if (rewardKind === "points") {
+      if (!rewardPoints || rewardPoints <= 0) { toast.error("Set a points reward"); return; }
+      reward = `🏆 ${rewardPoints} pts`;
+    } else {
+      const item = rewardItem.trim();
+      if (!item) { toast.error("Name the item reward"); return; }
+      reward = `🎁 ${item}`;
+    }
+    const message = `${desc}\n${reward}`;
     setBusy(true);
-    const { error } = await supabase.from("events").insert({ game_id: gameId, type, message: text, created_by: hostId });
+    const { error } = await supabase.from("events").insert({ game_id: gameId, type: "event", message, created_by: hostId });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    setMessage("");
-    toast.success("Event posted to feed");
+    setDescription("");
+    setRewardItem("");
+    toast.success("Event posted");
     load();
   };
 
   return (
     <Panel>
-      <p className="text-[11px] text-muted-foreground mb-3">Post a live event to the activity feed for everyone in the game.</p>
+      <p className="text-[11px] text-muted-foreground mb-3">Create an event with a description and a reward.</p>
       <div>
-        <p className="text-sm text-muted-foreground mb-1.5">Event type</p>
-        <div className="grid grid-cols-3 gap-2">
-          {EVENT_TYPES.map((t) => (
-            <button key={t.value} type="button" onClick={() => setType(t.value)}
-              className={`rounded-xl py-2 text-[11px] font-bold border ${type === t.value ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/70"}`}>
-              <span className="block text-base">{t.emoji}</span>{t.label}
+        <p className="text-sm text-muted-foreground mb-1.5">Description</p>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          maxLength={280}
+          placeholder="What's happening? e.g. First to the flagpole at the quad wins."
+          className="w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary"
+        />
+      </div>
+
+      <div className="mt-3">
+        <p className="text-sm text-muted-foreground mb-1.5">Reward</p>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          {(["points", "item"] as const).map((k) => (
+            <button key={k} type="button" onClick={() => setRewardKind(k)}
+              className={`h-10 rounded-xl text-xs font-bold border ${rewardKind === k ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/70"}`}>
+              {k === "points" ? "🏆 Points" : "🎁 Item"}
             </button>
           ))}
         </div>
+        {rewardKind === "points" ? (
+          <input
+            type="number"
+            value={rewardPoints}
+            min={0}
+            step={50}
+            onChange={(e) => setRewardPoints(parseInt(e.target.value || "0", 10))}
+            className="w-full bg-card border border-border rounded-xl px-4 h-11 text-sm focus:outline-none focus:border-primary"
+          />
+        ) : (
+          <input
+            type="text"
+            value={rewardItem}
+            maxLength={80}
+            onChange={(e) => setRewardItem(e.target.value)}
+            placeholder="e.g. Free Revive powerup, $20 gift card"
+            className="w-full bg-card border border-border rounded-xl px-4 h-11 text-sm focus:outline-none focus:border-primary"
+          />
+        )}
       </div>
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={3}
-        maxLength={280}
-        placeholder="e.g. The purge has begun. 30 minutes. No safe zones."
-        className="mt-3 w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary"
-      />
+
       <button disabled={busy} onClick={post}
-        className="mt-2 w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary text-primary-foreground text-sm font-extrabold disabled:opacity-50">
+        className="mt-3 w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary text-primary-foreground text-sm font-extrabold disabled:opacity-50">
         Post event
       </button>
 
@@ -769,10 +799,10 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
             {events.map((e) => (
               <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">{e.type}</span>
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Event</span>
                   <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
                 </div>
-                <p className="text-sm mt-0.5">{e.message}</p>
+                <p className="text-sm mt-0.5 whitespace-pre-line">{e.message}</p>
               </li>
             ))}
           </ul>

@@ -49,13 +49,15 @@ export type PowerupConfigEntry = {
   cost: number;
   scope: PowerupScope;
   zoneEnabled?: boolean;
+  zones?: PurchaseZone[];
+  /** @deprecated single-zone legacy field; migrated to zones[] */
   zone?: PurchaseZone | null;
 };
 export type PowerupConfig = Record<PowerupType, PowerupConfigEntry>;
 
 export const defaultPowerupConfig = (): PowerupConfig => {
   const out = {} as PowerupConfig;
-  for (const p of POWERUPS) out[p.type] = { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zone: null };
+  for (const p of POWERUPS) out[p.type] = { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zones: [] };
   return out;
 };
 
@@ -65,22 +67,34 @@ export const mergeConfig = (raw: any): PowerupConfig => {
   for (const p of POWERUPS) {
     const c = raw[p.type];
     if (c && typeof c === "object") {
+      const zones: PurchaseZone[] = Array.isArray(c.zones)
+        ? c.zones.filter((z: any) => z && typeof z === "object")
+        : c.zone && typeof c.zone === "object" ? [c.zone] : [];
       d[p.type] = {
         enabled: c.enabled !== false,
         cost: Number.isFinite(c.cost) ? Math.max(0, Math.round(c.cost)) : p.defaultCost,
         scope: p.scope,
         zoneEnabled: !!c.zoneEnabled,
-        zone: c.zone && typeof c.zone === "object" ? c.zone : null,
+        zones,
       };
     }
   }
   return d;
 };
 
-// Returns true if a lat/lng is inside the purchase zone (or no zone enforced)
+const pointInZone = (z: PurchaseZone, lat: number, lng: number) =>
+  lat <= z.north && lat >= z.south && lng <= z.east && lng >= z.west;
+
+// Returns true if lat/lng is inside ANY zone, or if no zones supplied.
+export const isInAnyZone = (zones: PurchaseZone[] | null | undefined, lat: number, lng: number): boolean => {
+  if (!zones || zones.length === 0) return true;
+  return zones.some((z) => pointInZone(z, lat, lng));
+};
+
+// Backward-compat single-zone helper.
 export const isInZone = (zone: PurchaseZone | null | undefined, lat: number, lng: number): boolean => {
   if (!zone) return true;
-  return lat <= zone.north && lat >= zone.south && lng <= zone.east && lng >= zone.west;
+  return pointInZone(zone, lat, lng);
 };
 
 // Returns ms remaining or 0 if expired/not active

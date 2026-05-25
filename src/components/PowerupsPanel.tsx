@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Coins, Sparkles, Users, Store, Check, Lock } from "lucide-react";
 import {
   POWERUPS, type PowerupType, type PowerupConfig, mergeConfig,
-  activatePowerup, purchasePowerup, isActive, remaining, findMeta, isInZone,
+  activatePowerup, purchasePowerup, isActive, remaining, findMeta, isInAnyZone,
 } from "@/lib/powerups";
 
 type Tab = "personal" | "team" | "store";
@@ -92,10 +92,11 @@ export function PowerupsPanel({ gameId, userId, username }: Props) {
     try {
       const c = cfg[type];
       if (!c.enabled) throw new Error("Disabled by host");
-      if (c.zoneEnabled && c.zone) {
+      const zones = c.zones && c.zones.length > 0 ? c.zones : c.zone ? [c.zone] : [];
+      if (c.zoneEnabled && zones.length > 0) {
         const { data: loc } = await supabase.from("player_locations").select("lat,lng").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
         if (!loc) throw new Error("Enable location to buy this powerup");
-        if (!isInZone(c.zone, loc.lat, loc.lng)) throw new Error(`You must be inside the ${findMeta(type).name} zone to buy this`);
+        if (!isInAnyZone(zones, loc.lat, loc.lng)) throw new Error(`You must be inside a ${findMeta(type).name} zone to buy this`);
       }
       await purchasePowerup({
         playerId: player.id, type, cost: c.cost,
