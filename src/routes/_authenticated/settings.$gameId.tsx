@@ -260,6 +260,7 @@ function GameSettingsPage() {
     { key: "purge", title: "Purge settings", subtitle: "Random and scheduled purges", icon: <Skull className="h-4 w-4" /> },
     { key: "powerups", title: "Powerups", subtitle: "Toggle, price, and configure each powerup", icon: <Zap className="h-4 w-4" /> },
     { key: "points", title: "Points & rewards", subtitle: "Points per elimination and powerup costs", icon: <Coins className="h-4 w-4" /> },
+    { key: "events", title: "Events", subtitle: "Post live events to the activity feed", icon: <Flag className="h-4 w-4" /> },
   ];
 
   const onBack = () => {
