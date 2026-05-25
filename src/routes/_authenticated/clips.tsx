@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
-import { Plus, Heart, MessageCircle, Share2, Check, X, Clock, Send } from "lucide-react";
+import { Plus, Heart, MessageCircle, Share2, Check, X, Clock, Send, MoreVertical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clips")({
@@ -127,6 +127,13 @@ function ClipsPage() {
               toast.success(`Clip ${status}`);
               setClips((cs) => cs.map((x) => x.id === c.id ? { ...x, status } : x));
             }}
+            onDelete={async () => {
+              if (!confirm("Delete this clip? This cannot be undone.")) return;
+              const { error } = await supabase.from("clips").delete().eq("id", c.id);
+              if (error) { toast.error(error.message); return; }
+              toast.success("Clip deleted");
+              setClips((cs) => cs.filter((x) => x.id !== c.id));
+            }}
           />
         ))}
       </div>
@@ -134,17 +141,20 @@ function ClipsPage() {
   );
 }
 
-function ClipCard({ clip, meId, liked, onLikeToggle, onReview }: {
+function ClipCard({ clip, meId, liked, onLikeToggle, onReview, onDelete }: {
   clip: Clip;
   meId: string | null;
   liked: boolean;
   onLikeToggle: () => void;
   onReview: (status: "approved" | "rejected") => void;
+  onDelete: () => void;
 }) {
   const name = clip.profile?.username ?? clip.profile?.display_name ?? "operator";
   const isHost = !!clip.game && meId === clip.game.host_id;
   const isMine = meId === clip.user_id;
+  const canDelete = isMine || isHost;
   const [showComments, setShowComments] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const share = async () => {
     const url = clip.video_url;
@@ -171,6 +181,30 @@ function ClipCard({ clip, meId, liked, onLikeToggle, onReview }: {
           </p>
         </div>
         <StatusBadge status={clip.status} />
+        {canDelete && (
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((s) => !s)}
+              className="h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center text-foreground/70"
+              aria-label="More options"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-9 z-20 min-w-[140px] bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                  <button
+                    onClick={() => { setMenuOpen(false); onDelete(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-danger hover:bg-danger/10"
+                  >
+                    <Trash2 className="h-4 w-4" /> Delete
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <video
