@@ -45,7 +45,7 @@ type Game = {
 };
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-type SectionKey = "rules" | "players" | "round" | "purge" | "powerups" | "points";
+type SectionKey = "rules" | "players" | "round" | "purge" | "powerups" | "points" | "events";
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
