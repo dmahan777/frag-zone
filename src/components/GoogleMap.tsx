@@ -110,10 +110,13 @@ function clusterIcon(count: number) {
   return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
 }
 
-export function GoogleMap({ markers = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
+export function GoogleMap({ markers = [], zones = [], center, zoom = 15, className = "", onMarkerClick, focusId }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerObjs = useRef<any[]>([]);
+  const zoneObjs = useRef<any[]>([]);
+  const didFitRef = useRef(false);
+  const userInteractedRef = useRef(false);
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
