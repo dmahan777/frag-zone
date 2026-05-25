@@ -699,3 +699,85 @@ function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }:
     </div>
   );
 }
+
+const EVENT_TYPES: { value: string; label: string; emoji: string }[] = [
+  { value: "purge", label: "Purge started", emoji: "☠️" },
+  { value: "round", label: "Round update", emoji: "🏁" },
+  { value: "powerup", label: "Powerup drop", emoji: "⚡" },
+  { value: "spawn", label: "Spawn event", emoji: "📍" },
+  { value: "end", label: "Game end", emoji: "🏆" },
+  { value: "custom", label: "Custom announcement", emoji: "📣" },
+];
+
+function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
+  const [type, setType] = useState("custom");
+  const [message, setMessage] = useState("");
+  const [events, setEvents] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("events").select("*").eq("game_id", gameId).order("created_at", { ascending: false }).limit(50);
+    setEvents(data ?? []);
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
+
+  const post = async () => {
+    const text = message.trim();
+    if (!text) { toast.error("Write a message first"); return; }
+    setBusy(true);
+    const { error } = await supabase.from("events").insert({ game_id: gameId, type, message: text, created_by: hostId });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setMessage("");
+    toast.success("Event posted to feed");
+    load();
+  };
+
+  return (
+    <Panel>
+      <p className="text-[11px] text-muted-foreground mb-3">Post a live event to the activity feed for everyone in the game.</p>
+      <div>
+        <p className="text-sm text-muted-foreground mb-1.5">Event type</p>
+        <div className="grid grid-cols-3 gap-2">
+          {EVENT_TYPES.map((t) => (
+            <button key={t.value} type="button" onClick={() => setType(t.value)}
+              className={`rounded-xl py-2 text-[11px] font-bold border ${type === t.value ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/70"}`}>
+              <span className="block text-base">{t.emoji}</span>{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={3}
+        maxLength={280}
+        placeholder="e.g. The purge has begun. 30 minutes. No safe zones."
+        className="mt-3 w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary"
+      />
+      <button disabled={busy} onClick={post}
+        className="mt-2 w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary text-primary-foreground text-sm font-extrabold disabled:opacity-50">
+        Post event
+      </button>
+
+      <div className="mt-5 pt-4 border-t border-border">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Recent events</p>
+        {events.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No events yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {events.map((e) => (
+              <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">{e.type}</span>
+                  <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
+                </div>
+                <p className="text-sm mt-0.5">{e.message}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Panel>
+  );
+}
