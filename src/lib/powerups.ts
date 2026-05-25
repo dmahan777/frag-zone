@@ -124,11 +124,16 @@ type ActivateOpts = {
   active: Record<string, any>;
   username: string;
   extra?: { targetId?: string; bountyPoints?: number; fakeZone?: string };
+  /** Optional configured duration override in ms. Falls back to meta.durationMs. */
+  durationMsOverride?: number | null;
 };
 
 export async function activatePowerup(opts: ActivateOpts) {
-  const { playerId, userId, gameId, teamId, type, inventory, active, username, extra } = opts;
+  const { playerId, userId, gameId, teamId, type, inventory, active, username, extra, durationMsOverride } = opts;
   const meta = findMeta(type);
+  const durationMs = (typeof durationMsOverride === "number" && durationMsOverride > 0)
+    ? durationMsOverride
+    : meta.durationMs;
 
   if ((inventory[type] ?? 0) <= 0) throw new Error("You don't own that power-up");
   if (isActive(active, type)) throw new Error("Already active");
@@ -144,22 +149,18 @@ export async function activatePowerup(opts: ActivateOpts) {
 
   switch (type) {
     case "immunity":
-      newActive.immunity = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
+      newActive.immunity = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
       extraPlayerPatch.status = "safe";
       break;
     case "ghostMode":
-      newActive.ghostMode = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
+      newActive.ghostMode = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
       break;
     case "decoy":
       newActive.decoy = {
         active: true,
-        expiresAt: new Date(now + meta.durationMs!).toISOString(),
+        expiresAt: new Date(now + durationMs!).toISOString(),
         fakeZone: extra?.fakeZone ?? "Unknown Zone",
       };
-      break;
-    case "roundPass":
-      newActive.roundPass = { active: true, roundNumber: extra?.bountyPoints /* not used */ ?? 0 };
-      extraPlayerPatch.status = "safe";
       break;
     case "bounty":
       if (!extra?.targetId || !extra?.bountyPoints) throw new Error("Pick a target and amount");
@@ -167,11 +168,11 @@ export async function activatePowerup(opts: ActivateOpts) {
       feedMsg = `💰 @${username} placed a ${extra.bountyPoints}pt bounty`;
       break;
     case "selfPurge":
-      newActive.selfPurge = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString() };
-      feedMsg = `☠️ PURGE — @${username} is open season for 1 hour!`;
+      newActive.selfPurge = { active: true, expiresAt: new Date(now + durationMs!).toISOString() };
+      feedMsg = `☠️ PURGE — @${username} is open season!`;
       break;
     case "uav":
-      newActive.uav = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString(), activatedBy: userId };
+      newActive.uav = { active: true, expiresAt: new Date(now + durationMs!).toISOString(), activatedBy: userId };
       // Propagate to all teammates
       if (teamId) {
         await supabase.from("players").update({
@@ -182,7 +183,7 @@ export async function activatePowerup(opts: ActivateOpts) {
       break;
     case "teamShield":
       if (!teamId) throw new Error("You need a team");
-      newActive.teamShield = { active: true, expiresAt: new Date(now + meta.durationMs!).toISOString(), teamId };
+      newActive.teamShield = { active: true, expiresAt: new Date(now + durationMs!).toISOString(), teamId };
       // Mark all teammates safe
       await supabase.from("players").update({ status: "safe" } as never)
         .eq("game_id", gameId).eq("team_id", teamId);
