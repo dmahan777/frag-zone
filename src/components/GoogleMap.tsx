@@ -137,12 +137,17 @@ export function GoogleMap({ markers = [], zones = [], center, zoom = 15, classNa
           gestureHandling: "greedy",
           backgroundColor: "var(--map-fallback)",
         });
+        mapRef.current.addListener("dragstart", () => { userInteractedRef.current = true; });
+        mapRef.current.addListener("zoom_changed", () => {
+          // Only flag user interaction after initial settle
+          if (didFitRef.current) userInteractedRef.current = true;
+        });
         // Trigger a resize once the container has its final size — fixes blank tiles
         // when the map is initialized inside a freshly-mounted flex/absolute parent.
         const fire = () => {
           if (!mapRef.current) return;
           google.maps.event.trigger(mapRef.current, "resize");
-          mapRef.current.setCenter(fallbackCenter);
+          if (!userInteractedRef.current) mapRef.current.setCenter(fallbackCenter);
         };
         requestAnimationFrame(fire);
         setTimeout(fire, 300);
@@ -160,6 +165,30 @@ export function GoogleMap({ markers = [], zones = [], center, zoom = 15, classNa
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Recenter when `center` prop changes (until the user interacts with the map)
+  useEffect(() => {
+    if (!mapRef.current || !center) return;
+    if (userInteractedRef.current) return;
+    mapRef.current.panTo(center);
+  }, [center?.lat, center?.lng]);
+
+  // Render purchase zones
+  useEffect(() => {
+    const google = (window as any).google;
+    if (!mapRef.current || !google?.maps) return;
+    zoneObjs.current.forEach((r) => r.setMap(null));
+    zoneObjs.current = zones.map((z) => new google.maps.Rectangle({
+      bounds: { north: z.north, south: z.south, east: z.east, west: z.west },
+      strokeColor: z.color ?? "#FF5FA0",
+      strokeWeight: 2,
+      fillColor: z.color ?? "#FF5FA0",
+      fillOpacity: 0.15,
+      clickable: false,
+      map: mapRef.current,
+    }));
+  }, [zones]);
+
 
   // Re-render markers
   useEffect(() => {
