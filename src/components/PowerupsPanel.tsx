@@ -191,21 +191,32 @@ export function PowerupsPanel({ gameId, userId, username }: Props) {
             const c = cfg[p.type];
             const owned = (inv[p.type] ?? 0) >= 1;
             const canAfford = (player.points ?? 0) >= c.cost;
+            const zones = c.zones && c.zones.length > 0 ? c.zones : c.zone ? [c.zone] : [];
+            const zoneRequired = !!c.zoneEnabled && zones.length > 0;
+            const inZone = zoneRequired ? (myLoc ? isInAnyZone(zones, myLoc.lat, myLoc.lng) : false) : true;
+            const zoneLocked = zoneRequired && !inZone;
+            const disabled = !c.enabled || owned || zoneLocked;
+            const label = !c.enabled ? "Off" : owned ? "Owned" : zoneLocked ? "Out of zone" : !canAfford ? "Need pts" : "Buy";
             return (
               <div key={p.type} className={`bg-card border ${!c.enabled ? "border-border opacity-60" : "border-border"} rounded-2xl p-3 flex items-center gap-3`}>
                 <div className="h-11 w-11 rounded-xl bg-primary/15 text-xl flex items-center justify-center">{p.emoji}</div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-display font-bold leading-tight">{p.name} <span className="text-[10px] uppercase text-muted-foreground ml-1">{p.scope}</span></p>
                   <p className="text-[11px] text-muted-foreground truncate">{p.short}</p>
+                  {zoneRequired && (
+                    <p className={`text-[10px] mt-0.5 font-bold ${inZone ? "text-primary" : "text-destructive"}`}>
+                      {inZone ? "✓ In purchase zone" : "📍 Enter purchase zone to buy"}
+                    </p>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold flex items-center gap-1 justify-end"><Coins className="h-3.5 w-3.5 text-secondary" />{c.cost}</p>
                   <button
-                    disabled={!c.enabled || owned || !canAfford}
+                    disabled={disabled}
                     onClick={() => onBuy(p.type)}
                     className="mt-1 px-3 py-1 rounded-lg text-[11px] font-bold bg-gradient-to-r from-primary to-secondary text-primary-foreground disabled:opacity-40 disabled:from-muted disabled:to-muted disabled:text-muted-foreground"
                   >
-                    {!c.enabled ? "Off" : owned ? "Owned" : canAfford ? "Buy" : "Locked"}
+                    {label}
                   </button>
                 </div>
               </div>
