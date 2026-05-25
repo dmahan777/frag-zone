@@ -23,7 +23,7 @@ function Login() {
 
   useEffect(() => {
     if (authLoading || !user) return;
-    navigate({ to: profile?.onboarded ? "/home" : "/onboarding" });
+    navigate({ to: profile?.onboarded ? "/menu" : "/onboarding" });
   }, [user, profile, authLoading, navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -48,13 +48,14 @@ function Login() {
         });
         if (error) throw error;
         if (data.session) {
-          toast.success("Account created! Setting you up...");
-          navigate({ to: "/onboarding" });
+          toast.success("Account created!");
+          navigate({ to: "/menu" });
         } else {
           toast.success("Account created! Check your email to verify it, then sign in.");
           setMode("signin");
         }
       } else {
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
