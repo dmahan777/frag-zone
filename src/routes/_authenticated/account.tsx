@@ -7,7 +7,7 @@ import { ChevronLeft, Loader2, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAccount } from "@/lib/account.functions";
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/account")({
   component: SettingsPage,
 });
 
