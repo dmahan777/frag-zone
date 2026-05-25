@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt, Coins } from "lucide-react";
 import { assignTargetsForGame } from "@/lib/assign-targets";
+import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -43,7 +44,7 @@ type Game = {
 };
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-type SectionKey = "rules" | "players" | "round" | "purge" | "powerups";
+type SectionKey = "rules" | "players" | "round" | "purge" | "powerups" | "points";
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
@@ -87,6 +88,9 @@ function GameSettingsPage() {
   const [puSpawnFreq, setPuSpawnFreq] = useState<"daily" | "weekly">("daily");
   const [puSpawnCount, setPuSpawnCount] = useState(3);
 
+  const [pointsPerElim, setPointsPerElim] = useState(100);
+  const [puConfig, setPuConfig] = useState<PowerupConfig>(defaultPowerupConfig());
+
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
     if (!g) return;
@@ -118,6 +122,8 @@ function GameSettingsPage() {
     setPuSpawnRadius(gg.powerup_spawn_radius_m ?? 500);
     setPuSpawnFreq((gg.powerup_spawn_frequency as "daily" | "weekly") ?? "daily");
     setPuSpawnCount(gg.powerup_spawn_count ?? 3);
+    setPointsPerElim((gg as any).points_per_elimination ?? 100);
+    setPuConfig(mergeConfig((gg as any).powerup_config));
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
@@ -146,7 +152,7 @@ function GameSettingsPage() {
 
   const save = async () => {
     setBusy(true);
-    const payload: Partial<Game> = {
+    const payload: Record<string, unknown> = {
       rules: rules.trim().slice(0, 4000),
       unlimited_rounds: unlimitedRounds,
       total_rounds: Math.max(1, Math.min(99, Math.round(totalRounds))),
@@ -173,6 +179,8 @@ function GameSettingsPage() {
       powerup_spawn_radius_m: Math.max(50, Math.min(20000, Math.round(puSpawnRadius))),
       powerup_spawn_frequency: puSpawnFreq,
       powerup_spawn_count: Math.max(1, Math.min(50, Math.round(puSpawnCount))),
+      points_per_elimination: Math.max(0, Math.min(10000, Math.round(pointsPerElim / 50) * 50)),
+      powerup_config: puConfig as any,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
@@ -245,7 +253,8 @@ function GameSettingsPage() {
     { key: "players", title: "Players & teams", subtitle: "Team size, number of teams, registration", icon: <Users className="h-4 w-4" /> },
     { key: "round", title: "Round settings", subtitle: "Rounds, length, eliminations", icon: <Timer className="h-4 w-4" /> },
     { key: "purge", title: "Purge settings", subtitle: "Random and scheduled purges", icon: <Skull className="h-4 w-4" /> },
-    { key: "powerups", title: "Powerups", subtitle: "Pick which powerups are in play", icon: <Zap className="h-4 w-4" /> },
+    { key: "powerups", title: "Powerups", subtitle: "Toggle, price, and configure each powerup", icon: <Zap className="h-4 w-4" /> },
+    { key: "points", title: "Points & rewards", subtitle: "Points per elimination and powerup costs", icon: <Coins className="h-4 w-4" /> },
   ];
 
   const onBack = () => {
@@ -504,53 +513,67 @@ function GameSettingsPage() {
 
       {section === "powerups" && (
         <Panel>
-          <p className="text-[11px] text-muted-foreground mb-3">Pick which powerups players can earn and use this game.</p>
+          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
           <div className="space-y-2">
-            <Toggle label="Shield" hint="Blocks one elimination attempt." checked={puShield} onChange={setPuShield} />
-            <Toggle label="Radar ping" hint="Reveals nearby players for a few seconds." checked={puRadar} onChange={setPuRadar} />
-            <Toggle label="Double points" hint="Next elimination is worth 2x." checked={puDouble} onChange={setPuDouble} />
-            <Toggle label="Revive token" hint="Lets an eliminated player come back in." checked={puRevive} onChange={setPuRevive} />
+            {POWERUPS.map((p) => (
+              <Toggle
+                key={p.type}
+                label={`${p.emoji} ${p.name}`}
+                hint={`${p.scope === "team" ? "Team • " : ""}${p.short}`}
+                checked={puConfig[p.type]?.enabled ?? true}
+                onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...puConfig[p.type], enabled: v } })}
+              />
+            ))}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-border space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Legacy / map spawn</p>
             <Toggle label="Random map spawn" hint="Powerups appear at random spots on the map for players to grab." checked={puMapSpawn} onChange={setPuMapSpawn} />
           </div>
 
           {puMapSpawn && (
             <div className="mt-4 bg-card border border-border rounded-xl p-3 space-y-4">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
-              <SliderRow
-                label="Spawn area radius"
-                value={puSpawnRadius}
-                min={50}
-                max={5000}
-                step={50}
-                onChange={setPuSpawnRadius}
-                suffix="m"
-              />
+              <SliderRow label="Spawn area radius" value={puSpawnRadius} min={50} max={5000} step={50} onChange={setPuSpawnRadius} suffix="m" />
               <div>
                 <p className="text-sm text-muted-foreground mb-1.5">How often</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["daily", "weekly"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setPuSpawnFreq(f)}
-                      className={`h-10 rounded-xl text-sm font-semibold border ${puSpawnFreq === f ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"}`}
-                    >
+                    <button key={f} onClick={() => setPuSpawnFreq(f)}
+                      className={`h-10 rounded-xl text-sm font-semibold border ${puSpawnFreq === f ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground"}`}>
                       {f === "daily" ? "Each day" : "Each week"}
                     </button>
                   ))}
                 </div>
               </div>
-              <SliderRow
-                label={`Powerups per ${puSpawnFreq === "daily" ? "day" : "week"}`}
-                value={puSpawnCount}
-                min={1}
-                max={25}
-                onChange={setPuSpawnCount}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                {puSpawnCount} powerup{puSpawnCount === 1 ? "" : "s"} will randomly spawn within {puSpawnRadius}m {puSpawnFreq === "daily" ? "each day" : "each week"}.
-              </p>
+              <SliderRow label={`Powerups per ${puSpawnFreq === "daily" ? "day" : "week"}`} value={puSpawnCount} min={1} max={25} onChange={setPuSpawnCount} />
             </div>
           )}
+        </Panel>
+      )}
+
+      {section === "points" && (
+        <Panel>
+          <p className="text-[11px] text-muted-foreground mb-3">Points earned per confirmed elimination. Costs adjust in steps of 50.</p>
+          <StepperRow label="Points per elimination" value={pointsPerElim} step={50} min={0} max={5000} onChange={setPointsPerElim} />
+
+          <div className="mt-5 pt-4 border-t border-border space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Powerup store prices</p>
+            {POWERUPS.map((p) => (
+              <div key={p.type} className={`bg-card border border-border rounded-xl px-3 py-2 ${puConfig[p.type]?.enabled === false ? "opacity-50" : ""}`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-sm font-semibold">{p.emoji} {p.name}</p>
+                  <span className="text-[10px] uppercase text-muted-foreground">{p.scope}</span>
+                </div>
+                <StepperRow
+                  label="Cost"
+                  value={puConfig[p.type]?.cost ?? p.defaultCost}
+                  step={50} min={0} max={10000}
+                  onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...puConfig[p.type], cost: v } })}
+                />
+              </div>
+            ))}
+          </div>
         </Panel>
       )}
     </div>
@@ -596,6 +619,20 @@ function SliderRow({ label, value, min, max, step = 1, onChange, suffix, classNa
         onChange={(e) => onChange(parseInt(e.target.value))}
         className="w-full mt-1 accent-primary"
       />
+    </div>
+  );
+}
+
+function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }: { label: string; value: number; step?: number; min?: number; max?: number; onChange: (v: number) => void }) {
+  const clamp = (n: number) => Math.max(min, Math.min(max, Math.round(n / step) * step));
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => onChange(clamp(value - step))} className="h-8 w-8 rounded-lg bg-card border border-border text-sm font-bold">−</button>
+        <span className="min-w-[64px] text-center text-sm font-bold tabular-nums">{value}</span>
+        <button type="button" onClick={() => onChange(clamp(value + step))} className="h-8 w-8 rounded-lg bg-card border border-border text-sm font-bold">+</button>
+      </div>
     </div>
   );
 }
