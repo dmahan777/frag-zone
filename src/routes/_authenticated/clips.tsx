@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/Avatar";
-import { Plus, Heart, MessageCircle, Share2, Check, X, Clock, Send } from "lucide-react";
+import { Plus, Heart, MessageCircle, Share2, Check, X, Clock, Send, MoreVertical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/clips")({
