@@ -141,17 +141,20 @@ function ClipsPage() {
   );
 }
 
-function ClipCard({ clip, meId, liked, onLikeToggle, onReview }: {
+function ClipCard({ clip, meId, liked, onLikeToggle, onReview, onDelete }: {
   clip: Clip;
   meId: string | null;
   liked: boolean;
   onLikeToggle: () => void;
   onReview: (status: "approved" | "rejected") => void;
+  onDelete: () => void;
 }) {
   const name = clip.profile?.username ?? clip.profile?.display_name ?? "operator";
   const isHost = !!clip.game && meId === clip.game.host_id;
   const isMine = meId === clip.user_id;
+  const canDelete = isMine || isHost;
   const [showComments, setShowComments] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const share = async () => {
     const url = clip.video_url;
