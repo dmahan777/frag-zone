@@ -540,7 +540,7 @@ function GameSettingsPage() {
           {puMapSpawn && (
             <div className="mt-4 bg-card border border-border rounded-xl p-3 space-y-4">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
-              <SliderRow label="Spawn area radius" value={puSpawnRadius} min={50} max={5000} step={50} onChange={setPuSpawnRadius} suffix="m" />
+              
               <div>
                 <p className="text-sm text-muted-foreground mb-1.5">Custom spawn area</p>
                 <button onClick={() => setDrawerOpen(true)}
