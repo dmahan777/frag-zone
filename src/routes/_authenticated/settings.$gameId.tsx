@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt, Coins } from "lucide-react";
 import { assignTargetsForGame } from "@/lib/assign-targets";
 import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
+import { SpawnAreaDrawer, type SpawnArea } from "@/components/SpawnAreaDrawer";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -90,6 +91,8 @@ function GameSettingsPage() {
 
   const [pointsPerElim, setPointsPerElim] = useState(100);
   const [puConfig, setPuConfig] = useState<PowerupConfig>(defaultPowerupConfig());
+  const [spawnArea, setSpawnArea] = useState<SpawnArea | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
@@ -124,6 +127,7 @@ function GameSettingsPage() {
     setPuSpawnCount(gg.powerup_spawn_count ?? 3);
     setPointsPerElim((gg as any).points_per_elimination ?? 100);
     setPuConfig(mergeConfig((gg as any).powerup_config));
+    setSpawnArea(((gg as any).powerup_spawn_area as SpawnArea | null) ?? null);
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
@@ -181,6 +185,7 @@ function GameSettingsPage() {
       powerup_spawn_count: Math.max(1, Math.min(50, Math.round(puSpawnCount))),
       points_per_elimination: Math.max(0, Math.min(10000, Math.round(pointsPerElim / 50) * 50)),
       powerup_config: puConfig as any,
+      powerup_spawn_area: spawnArea as any,
     };
     const { error } = await supabase.from("games").update(payload as never).eq("id", game.id);
     setBusy(false);
@@ -536,6 +541,17 @@ function GameSettingsPage() {
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
               <SliderRow label="Spawn area radius" value={puSpawnRadius} min={50} max={5000} step={50} onChange={setPuSpawnRadius} suffix="m" />
               <div>
+                <p className="text-sm text-muted-foreground mb-1.5">Custom spawn area</p>
+                <button onClick={() => setDrawerOpen(true)}
+                  className="w-full h-11 rounded-xl bg-card border border-border text-sm font-semibold flex items-center justify-between px-3">
+                  <span>{spawnArea ? "Edit drawn square" : "Draw a square on the map"}</span>
+                  <span className="text-[11px] text-muted-foreground">{spawnArea ? "Set ✓" : "Optional"}</span>
+                </button>
+                {spawnArea && (
+                  <button onClick={() => setSpawnArea(null)} className="mt-1 text-[11px] text-danger">Clear drawn area</button>
+                )}
+              </div>
+              <div>
                 <p className="text-sm text-muted-foreground mb-1.5">How often</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["daily", "weekly"] as const).map((f) => (
@@ -576,6 +592,12 @@ function GameSettingsPage() {
           </div>
         </Panel>
       )}
+      <SpawnAreaDrawer
+        open={drawerOpen}
+        initial={spawnArea}
+        onClose={() => setDrawerOpen(false)}
+        onSave={(a) => setSpawnArea(a)}
+      />
     </div>
   );
 }

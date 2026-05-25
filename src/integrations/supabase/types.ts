@@ -232,6 +232,7 @@ export type Database = {
           powerup_radar_ping: boolean
           powerup_revive_token: boolean
           powerup_shield: boolean
+          powerup_spawn_area: Json | null
           powerup_spawn_count: number
           powerup_spawn_frequency: string
           powerup_spawn_radius_m: number
@@ -275,6 +276,7 @@ export type Database = {
           powerup_radar_ping?: boolean
           powerup_revive_token?: boolean
           powerup_shield?: boolean
+          powerup_spawn_area?: Json | null
           powerup_spawn_count?: number
           powerup_spawn_frequency?: string
           powerup_spawn_radius_m?: number
@@ -318,6 +320,7 @@ export type Database = {
           powerup_radar_ping?: boolean
           powerup_revive_token?: boolean
           powerup_shield?: boolean
+          powerup_spawn_area?: Json | null
           powerup_spawn_count?: number
           powerup_spawn_frequency?: string
           powerup_spawn_radius_m?: number
