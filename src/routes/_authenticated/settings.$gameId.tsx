@@ -704,9 +704,10 @@ function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }:
 
 function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
   const [description, setDescription] = useState("");
-  const [rewardKind, setRewardKind] = useState<"points" | "item">("points");
+  const [rewardKind, setRewardKind] = useState<"points" | "item" | "powerup">("points");
   const [rewardPoints, setRewardPoints] = useState(100);
   const [rewardItem, setRewardItem] = useState("");
+  const [rewardPowerup, setRewardPowerup] = useState<string>(POWERUPS[0].type);
   const [events, setEvents] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -716,19 +717,50 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
 
+  const grantPowerupToWinner = async (eventId: string, type: string, winnerUserId: string, label: string) => {
+    const { data: player } = await supabase.from("players").select("id, powerup_inventory").eq("game_id", gameId).eq("user_id", winnerUserId).maybeSingle();
+    if (!player) { toast.error("That player isn't in this game"); return; }
+    const inv = (player.powerup_inventory as Record<string, number>) ?? {};
+    const newInv = { ...inv, [type]: (inv[type] ?? 0) + 1 };
+    const { error: upErr } = await supabase.from("players").update({ powerup_inventory: newInv } as never).eq("id", player.id);
+    if (upErr) { toast.error(upErr.message); return; }
+    await supabase.from("events").insert({
+      game_id: gameId, type: "event", created_by: hostId,
+      message: `🏆 Event winner awarded ${label}`,
+    });
+    toast.success(`Awarded ${label}`);
+    load();
+  };
+
+  const pickWinnerAndAward = async (eventId: string, type: string, label: string) => {
+    const { data: players } = await supabase.from("players").select("user_id, profiles:profiles!players_user_id_fkey(display_name, username)" as any).eq("game_id", gameId);
+    // Fallback simple picker
+    const userId = prompt("Winner's user ID (paste from Players list):", "");
+    if (!userId) return;
+    await grantPowerupToWinner(eventId, type, userId.trim(), label);
+  };
+
   const post = async () => {
     const desc = description.trim();
     if (!desc) { toast.error("Add a description"); return; }
     let reward = "";
+    let payload: Record<string, any> = {};
     if (rewardKind === "points") {
       if (!rewardPoints || rewardPoints <= 0) { toast.error("Set a points reward"); return; }
       reward = `🏆 ${rewardPoints} pts`;
-    } else {
+      payload = { kind: "points", points: rewardPoints };
+    } else if (rewardKind === "item") {
       const item = rewardItem.trim();
       if (!item) { toast.error("Name the item reward"); return; }
       reward = `🎁 ${item}`;
+      payload = { kind: "item", item };
+    } else {
+      const meta = POWERUPS.find((p) => p.type === rewardPowerup);
+      if (!meta) { toast.error("Pick a powerup"); return; }
+      reward = `${meta.emoji} ${meta.name} powerup`;
+      payload = { kind: "powerup", powerup: meta.type, label: `${meta.emoji} ${meta.name}` };
     }
-    const message = `${desc}\n${reward}`;
+    const message = `${desc}\nReward: ${reward}\n[reward:${JSON.stringify(payload)}]`;
     setBusy(true);
     const { error } = await supabase.from("events").insert({ game_id: gameId, type: "event", message, created_by: hostId });
     setBusy(false);
@@ -739,9 +771,16 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
     load();
   };
 
+  const parseReward = (msg: string): { kind: string; powerup?: string; label?: string } | null => {
+    const m = msg.match(/\[reward:(\{.*?\})\]/);
+    if (!m) return null;
+    try { return JSON.parse(m[1]); } catch { return null; }
+  };
+  const stripReward = (msg: string) => msg.replace(/\n?\[reward:\{.*?\}\]/, "");
+
   return (
     <Panel>
-      <p className="text-[11px] text-muted-foreground mb-3">Create an event with a description and a reward.</p>
+      <p className="text-[11px] text-muted-foreground mb-3">Create an event with a description and a reward. Powerup rewards can be granted to the winner from the recent events list.</p>
       <div>
         <p className="text-sm text-muted-foreground mb-1.5">Description</p>
         <textarea
@@ -749,22 +788,22 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           maxLength={280}
-          placeholder="What's happening? e.g. First to the flagpole at the quad wins."
+          placeholder="What's happening? e.g. Hold the zone for 30 minutes."
           className="w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary"
         />
       </div>
 
       <div className="mt-3">
         <p className="text-sm text-muted-foreground mb-1.5">Reward</p>
-        <div className="grid grid-cols-2 gap-2 mb-2">
-          {(["points", "item"] as const).map((k) => (
+        <div className="grid grid-cols-3 gap-2 mb-2">
+          {(["points", "item", "powerup"] as const).map((k) => (
             <button key={k} type="button" onClick={() => setRewardKind(k)}
               className={`h-10 rounded-xl text-xs font-bold border ${rewardKind === k ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/70"}`}>
-              {k === "points" ? "🏆 Points" : "🎁 Item"}
+              {k === "points" ? "🏆 Points" : k === "item" ? "🎁 Item" : "⚡ Powerup"}
             </button>
           ))}
         </div>
-        {rewardKind === "points" ? (
+        {rewardKind === "points" && (
           <input
             type="number"
             value={rewardPoints}
@@ -773,15 +812,27 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
             onChange={(e) => setRewardPoints(parseInt(e.target.value || "0", 10))}
             className="w-full bg-card border border-border rounded-xl px-4 h-11 text-sm focus:outline-none focus:border-primary"
           />
-        ) : (
+        )}
+        {rewardKind === "item" && (
           <input
             type="text"
             value={rewardItem}
             maxLength={80}
             onChange={(e) => setRewardItem(e.target.value)}
-            placeholder="e.g. Free Revive powerup, $20 gift card"
+            placeholder="e.g. $20 gift card"
             className="w-full bg-card border border-border rounded-xl px-4 h-11 text-sm focus:outline-none focus:border-primary"
           />
+        )}
+        {rewardKind === "powerup" && (
+          <select
+            value={rewardPowerup}
+            onChange={(e) => setRewardPowerup(e.target.value)}
+            className="w-full bg-card border border-border rounded-xl px-4 h-11 text-sm focus:outline-none focus:border-primary"
+          >
+            {POWERUPS.map((p) => (
+              <option key={p.type} value={p.type}>{p.emoji} {p.name} {p.scope === "team" ? "(team)" : ""}</option>
+            ))}
+          </select>
         )}
       </div>
 
@@ -796,15 +847,24 @@ function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
           <p className="text-xs text-muted-foreground">No events yet.</p>
         ) : (
           <ul className="space-y-2">
-            {events.map((e) => (
-              <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Event</span>
-                  <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
-                </div>
-                <p className="text-sm mt-0.5 whitespace-pre-line">{e.message}</p>
-              </li>
-            ))}
+            {events.map((e) => {
+              const r = parseReward(e.message ?? "");
+              return (
+                <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] uppercase tracking-widest text-primary font-bold">Event</span>
+                    <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
+                  </div>
+                  <p className="text-sm mt-0.5 whitespace-pre-line">{stripReward(e.message ?? "")}</p>
+                  {r?.kind === "powerup" && r.powerup && (
+                    <button onClick={() => pickWinnerAndAward(e.id, r.powerup!, r.label ?? r.powerup!)}
+                      className="mt-2 w-full h-9 rounded-lg bg-primary/15 text-primary border border-primary/40 text-xs font-bold">
+                      Award {r.label} to winner
+                    </button>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
