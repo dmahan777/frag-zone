@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Coins, Sparkles, Users, Store, Check, Lock } from "lucide-react";
 import {
   POWERUPS, type PowerupType, type PowerupConfig, mergeConfig,
-  activatePowerup, purchasePowerup, isActive, remaining, findMeta, isInZone,
+  activatePowerup, purchasePowerup, isActive, remaining, findMeta, isInAnyZone,
 } from "@/lib/powerups";
 
 type Tab = "personal" | "team" | "store";
