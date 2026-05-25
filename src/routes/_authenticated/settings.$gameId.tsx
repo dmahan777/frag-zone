@@ -365,6 +365,17 @@ function GameSettingsPage() {
                 className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
               />
             </label>
+            <button
+              onClick={startRoundNow}
+              className="w-full mb-3 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl py-3 text-sm font-extrabold shadow-glow-primary"
+            >
+              <Bolt className="h-4 w-4" /> Start now
+            </button>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">or schedule</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
             <div className="flex gap-2">
               <button onClick={() => setShowStartRound(false)} className="flex-1 bg-card border border-border rounded-xl py-3 text-sm font-bold">Cancel</button>
               <button onClick={scheduleStartRound} className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl py-3 text-sm font-bold">Schedule</button>
