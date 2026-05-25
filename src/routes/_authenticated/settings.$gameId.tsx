@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2 } from "lucide-react";
+import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt } from "lucide-react";
+import { assignTargetsForGame } from "@/lib/assign-targets";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
@@ -197,6 +198,24 @@ function GameSettingsPage() {
     setShowStartRound(false);
   };
 
+  const startRoundNow = async () => {
+    if (!game) return;
+    if (!confirm("Start the round right now?")) return;
+    try {
+      const count = await assignTargetsForGame(game.id);
+      const days = Math.max(1, game.round_length_days || 1);
+      const endsAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase
+        .from("games")
+        .update({ status: "active", current_round: Math.max(1, game.current_round || 1), round_ends_at: endsAt, round_starts_at: new Date().toISOString() } as never)
+        .eq("id", game.id);
+      if (error) throw error;
+      await supabase.from("events").insert({ game_id: game.id, type: "system", message: `🎯 Round ${Math.max(1, game.current_round || 1)} started — ${count} players in the chain`, created_by: user!.id });
+      toast.success("Round started");
+      setShowStartRound(false);
+    } catch (err) { toast.error((err as Error).message); }
+  };
+
   const endGame = async () => {
     if (!confirm("End the game for everyone? This can't be undone.")) return;
     const { error } = await supabase.from("games").update({ status: "ended" } as never).eq("id", game.id);
@@ -346,6 +365,17 @@ function GameSettingsPage() {
                 className="bg-background border border-border rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-primary"
               />
             </label>
+            <button
+              onClick={startRoundNow}
+              className="w-full mb-3 flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl py-3 text-sm font-extrabold shadow-glow-primary"
+            >
+              <Bolt className="h-4 w-4" /> Start now
+            </button>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">or schedule</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
             <div className="flex gap-2">
               <button onClick={() => setShowStartRound(false)} className="flex-1 bg-card border border-border rounded-xl py-3 text-sm font-bold">Cancel</button>
               <button onClick={scheduleStartRound} className="flex-1 bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-xl py-3 text-sm font-bold">Schedule</button>
