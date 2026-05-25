@@ -26,7 +26,7 @@ import { Route as AuthenticatedChatRouteImport } from './routes/_authenticated/c
 import { Route as AuthenticatedSettingsGameIdRouteImport } from './routes/_authenticated/settings.$gameId'
 import { Route as AuthenticatedPlayersGameIdRouteImport } from './routes/_authenticated/players.$gameId'
 import { Route as AuthenticatedGameGameIdRouteImport } from './routes/_authenticated/game.$gameId'
-import { Route as AuthenticatedClipsNewRouteImport } from './routes/_authenticated/clips.new'
+import { Route as AuthenticatedClipsNewRouteImport } from './routes/_authenticated/clips_.new'
 import { Route as AuthenticatedAdminGameIdRouteImport } from './routes/_authenticated/admin.$gameId'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -117,9 +117,9 @@ const AuthenticatedGameGameIdRoute = AuthenticatedGameGameIdRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedClipsNewRoute = AuthenticatedClipsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AuthenticatedClipsRoute,
+  id: '/clips_/new',
+  path: '/clips/new',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminGameIdRoute =
   AuthenticatedAdminGameIdRouteImport.update({
@@ -133,7 +133,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/chat': typeof AuthenticatedChatRoute
-  '/clips': typeof AuthenticatedClipsRouteWithChildren
+  '/clips': typeof AuthenticatedClipsRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -153,7 +153,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/chat': typeof AuthenticatedChatRoute
-  '/clips': typeof AuthenticatedClipsRouteWithChildren
+  '/clips': typeof AuthenticatedClipsRoute
   '/feed': typeof AuthenticatedFeedRoute
   '/home': typeof AuthenticatedHomeRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -175,7 +175,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/_authenticated/chat': typeof AuthenticatedChatRoute
-  '/_authenticated/clips': typeof AuthenticatedClipsRouteWithChildren
+  '/_authenticated/clips': typeof AuthenticatedClipsRoute
   '/_authenticated/feed': typeof AuthenticatedFeedRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
@@ -185,7 +185,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/target': typeof AuthenticatedTargetRoute
   '/_authenticated/admin/$gameId': typeof AuthenticatedAdminGameIdRoute
-  '/_authenticated/clips/new': typeof AuthenticatedClipsNewRoute
+  '/_authenticated/clips_/new': typeof AuthenticatedClipsNewRoute
   '/_authenticated/game/$gameId': typeof AuthenticatedGameGameIdRoute
   '/_authenticated/players/$gameId': typeof AuthenticatedPlayersGameIdRoute
   '/_authenticated/settings/$gameId': typeof AuthenticatedSettingsGameIdRoute
@@ -248,7 +248,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/target'
     | '/_authenticated/admin/$gameId'
-    | '/_authenticated/clips/new'
+    | '/_authenticated/clips_/new'
     | '/_authenticated/game/$gameId'
     | '/_authenticated/players/$gameId'
     | '/_authenticated/settings/$gameId'
@@ -382,12 +382,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGameGameIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/clips/new': {
-      id: '/_authenticated/clips/new'
-      path: '/new'
+    '/_authenticated/clips_/new': {
+      id: '/_authenticated/clips_/new'
+      path: '/clips/new'
       fullPath: '/clips/new'
       preLoaderRoute: typeof AuthenticatedClipsNewRouteImport
-      parentRoute: typeof AuthenticatedClipsRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin/$gameId': {
       id: '/_authenticated/admin/$gameId'
@@ -398,17 +398,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AuthenticatedClipsRouteChildren {
-  AuthenticatedClipsNewRoute: typeof AuthenticatedClipsNewRoute
-}
-
-const AuthenticatedClipsRouteChildren: AuthenticatedClipsRouteChildren = {
-  AuthenticatedClipsNewRoute: AuthenticatedClipsNewRoute,
-}
-
-const AuthenticatedClipsRouteWithChildren =
-  AuthenticatedClipsRoute._addFileChildren(AuthenticatedClipsRouteChildren)
 
 interface AuthenticatedPlayersRouteChildren {
   AuthenticatedPlayersGameIdRoute: typeof AuthenticatedPlayersGameIdRoute
@@ -423,7 +412,7 @@ const AuthenticatedPlayersRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedChatRoute: typeof AuthenticatedChatRoute
-  AuthenticatedClipsRoute: typeof AuthenticatedClipsRouteWithChildren
+  AuthenticatedClipsRoute: typeof AuthenticatedClipsRoute
   AuthenticatedFeedRoute: typeof AuthenticatedFeedRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
@@ -433,13 +422,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedTargetRoute: typeof AuthenticatedTargetRoute
   AuthenticatedAdminGameIdRoute: typeof AuthenticatedAdminGameIdRoute
+  AuthenticatedClipsNewRoute: typeof AuthenticatedClipsNewRoute
   AuthenticatedGameGameIdRoute: typeof AuthenticatedGameGameIdRoute
   AuthenticatedSettingsGameIdRoute: typeof AuthenticatedSettingsGameIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedChatRoute: AuthenticatedChatRoute,
-  AuthenticatedClipsRoute: AuthenticatedClipsRouteWithChildren,
+  AuthenticatedClipsRoute: AuthenticatedClipsRoute,
   AuthenticatedFeedRoute: AuthenticatedFeedRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
@@ -449,6 +439,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedTargetRoute: AuthenticatedTargetRoute,
   AuthenticatedAdminGameIdRoute: AuthenticatedAdminGameIdRoute,
+  AuthenticatedClipsNewRoute: AuthenticatedClipsNewRoute,
   AuthenticatedGameGameIdRoute: AuthenticatedGameGameIdRoute,
   AuthenticatedSettingsGameIdRoute: AuthenticatedSettingsGameIdRoute,
 }
@@ -466,3 +457,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
