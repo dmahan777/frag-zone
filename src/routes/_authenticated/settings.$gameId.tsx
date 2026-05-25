@@ -7,6 +7,7 @@ import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, 
 import { assignTargetsForGame } from "@/lib/assign-targets";
 import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
 import { SpawnAreaDrawer, type SpawnArea } from "@/components/SpawnAreaDrawer";
+import { MultiZoneDrawer, type Zone } from "@/components/MultiZoneDrawer";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
