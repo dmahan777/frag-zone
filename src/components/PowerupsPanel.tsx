@@ -92,6 +92,11 @@ export function PowerupsPanel({ gameId, userId, username }: Props) {
     try {
       const c = cfg[type];
       if (!c.enabled) throw new Error("Disabled by host");
+      if (c.zoneEnabled && c.zone) {
+        const { data: loc } = await supabase.from("player_locations").select("lat,lng").eq("game_id", gameId).eq("user_id", userId).maybeSingle();
+        if (!loc) throw new Error("Enable location to buy this powerup");
+        if (!isInZone(c.zone, loc.lat, loc.lng)) throw new Error(`You must be inside the ${findMeta(type).name} zone to buy this`);
+      }
       await purchasePowerup({
         playerId: player.id, type, cost: c.cost,
         currentPoints: player.points ?? 0,
