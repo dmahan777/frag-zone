@@ -12,7 +12,7 @@ export function Avatar({ name, url, size = 40, ring, ringColor }: { name?: strin
   const style: React.CSSProperties = { width: size, height: size, fontSize: size * 0.4 };
   if (useCustom) {
     // emulate ring-2 + ring-offset-2 with box-shadow so we can use an arbitrary color
-    style.boxShadow = `0 0 0 2px hsl(var(--background)), 0 0 0 4px ${ringColor}`;
+    style.boxShadow = `0 0 0 2px var(--background), 0 0 0 4px ${ringColor}`;
   }
 
   return (
