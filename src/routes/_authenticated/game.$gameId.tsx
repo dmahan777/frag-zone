@@ -46,6 +46,7 @@ function GameScreen() {
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
     setGame(g as GameRow);
+    setPowerupConfig(mergeConfig((g as any)?.powerup_config));
     const { data: ps } = await supabase.from("players").select("id, user_id, status, target_id, kills, team_id").eq("game_id", gameId);
     const arr = (ps as PlayerRow[]) ?? [];
     setPlayers(arr);
