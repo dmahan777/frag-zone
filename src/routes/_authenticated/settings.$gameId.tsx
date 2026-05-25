@@ -253,7 +253,8 @@ function GameSettingsPage() {
     { key: "players", title: "Players & teams", subtitle: "Team size, number of teams, registration", icon: <Users className="h-4 w-4" /> },
     { key: "round", title: "Round settings", subtitle: "Rounds, length, eliminations", icon: <Timer className="h-4 w-4" /> },
     { key: "purge", title: "Purge settings", subtitle: "Random and scheduled purges", icon: <Skull className="h-4 w-4" /> },
-    { key: "powerups", title: "Powerups", subtitle: "Pick which powerups are in play", icon: <Zap className="h-4 w-4" /> },
+    { key: "powerups", title: "Powerups", subtitle: "Toggle, price, and configure each powerup", icon: <Zap className="h-4 w-4" /> },
+    { key: "points", title: "Points & rewards", subtitle: "Points per elimination and powerup costs", icon: <Coins className="h-4 w-4" /> },
   ];
 
   const onBack = () => {
