@@ -248,10 +248,11 @@ export function GoogleMap({ markers = [], zones = [], center, zoom = 15, classNa
         mapRef.current.panTo({ lat: target.lat, lng: target.lng });
         mapRef.current.setZoom(18);
       }
-    } else if (markers.length > 0) {
+    } else if (markers.length > 0 && !didFitRef.current && !userInteractedRef.current) {
       const bounds = new google.maps.LatLngBounds();
       markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
       mapRef.current.fitBounds(bounds, 80);
+      didFitRef.current = true;
       const listener = google.maps.event.addListenerOnce(mapRef.current, "idle", () => {
         if (mapRef.current.getZoom() > 17) mapRef.current.setZoom(17);
       });
