@@ -7,11 +7,11 @@ import { ChevronLeft, Loader2, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMyAccount } from "@/lib/account.functions";
 
-export const Route = createFileRoute("/_authenticated/settings")({
-  component: SettingsPage,
+export const Route = createFileRoute("/_authenticated/account")({
+  component: AccountPage,
 });
 
-function SettingsPage() {
+function AccountPage() {
   const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const callDelete = useServerFn(deleteMyAccount);
@@ -19,8 +19,6 @@ function SettingsPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [school, setSchool] = useState("");
-  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -29,8 +27,6 @@ function SettingsPage() {
     setUsername(profile.username ?? "");
     setDisplayName(profile.display_name ?? "");
     setBio((profile as { bio?: string | null }).bio ?? "");
-    setSchool(profile.school ?? "");
-    setPhone(profile.phone ?? "");
   }, [profile]);
 
   const save = async () => {
@@ -42,8 +38,6 @@ function SettingsPage() {
         username: username.trim() || null,
         display_name: displayName.trim() || null,
         bio: bio.trim() || null,
-        school: school.trim() || null,
-        phone: phone.trim() || null,
       })
       .eq("id", user.id);
     setSaving(false);
@@ -76,7 +70,7 @@ function SettingsPage() {
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
-        <h1 className="font-display text-3xl font-extrabold">Settings</h1>
+        <h1 className="font-display text-3xl font-extrabold">Account settings</h1>
       </div>
 
       <div className="space-y-4">
@@ -88,12 +82,6 @@ function SettingsPage() {
         </Field>
         <Field label="Bio / description">
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputCls} h-24 resize-none`} placeholder="Say something about yourself" maxLength={240} />
-        </Field>
-        <Field label="School">
-          <input value={school} onChange={(e) => setSchool(e.target.value)} className={inputCls} placeholder="School or org" maxLength={80} />
-        </Field>
-        <Field label="Phone">
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="Optional" maxLength={32} />
         </Field>
 
         <button
