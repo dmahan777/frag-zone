@@ -198,6 +198,24 @@ function GameSettingsPage() {
     setShowStartRound(false);
   };
 
+  const startRoundNow = async () => {
+    if (!game) return;
+    if (!confirm("Start the round right now?")) return;
+    try {
+      const count = await assignTargetsForGame(game.id);
+      const days = Math.max(1, game.round_length_days || 1);
+      const endsAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase
+        .from("games")
+        .update({ status: "active", current_round: Math.max(1, game.current_round || 1), round_ends_at: endsAt, round_starts_at: new Date().toISOString() } as never)
+        .eq("id", game.id);
+      if (error) throw error;
+      await supabase.from("events").insert({ game_id: game.id, type: "system", message: `🎯 Round ${Math.max(1, game.current_round || 1)} started — ${count} players in the chain`, created_by: user!.id });
+      toast.success("Round started");
+      setShowStartRound(false);
+    } catch (err) { toast.error((err as Error).message); }
+  };
+
   const endGame = async () => {
     if (!confirm("End the game for everyone? This can't be undone.")) return;
     const { error } = await supabase.from("games").update({ status: "ended" } as never).eq("id", game.id);
