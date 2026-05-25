@@ -10,6 +10,7 @@ import { useLiveLocation } from "@/hooks/use-live-location";
 import { toast } from "sonner";
 import { reverseGeocodeCity } from "@/lib/geocode.functions";
 import { TeamCreator, MyTeamSection } from "@/components/TeamSections";
+import { PowerupsPanel } from "@/components/PowerupsPanel";
 
 export const Route = createFileRoute("/_authenticated/game/$gameId")({
   component: GameScreen,
