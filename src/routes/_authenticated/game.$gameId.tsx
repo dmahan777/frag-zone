@@ -183,7 +183,7 @@ function GameScreen() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Map area */}
-      <div className="relative w-full h-[52vh] min-h-[360px]">
+      <div className="relative w-full h-[72vh] min-h-[500px]">
         <GoogleMap markers={markers} center={center} className="absolute inset-0" onMarkerClick={(id) => setFocusId(id)} focusId={focusId} />
 
         {/* Top-left floating controls */}
