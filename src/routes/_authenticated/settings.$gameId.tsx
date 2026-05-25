@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, ScrollText, Users, Timer, Skull, Save, Crown, ChevronRight, Zap, Play, Flag, Trash2, Zap as Bolt, Coins } from "lucide-react";
 import { assignTargetsForGame } from "@/lib/assign-targets";
 import { POWERUPS, type PowerupConfig, mergeConfig, defaultPowerupConfig } from "@/lib/powerups";
+import { SpawnAreaDrawer, type SpawnArea } from "@/components/SpawnAreaDrawer";
 
 export const Route = createFileRoute("/_authenticated/settings/$gameId")({
   component: GameSettingsPage,
