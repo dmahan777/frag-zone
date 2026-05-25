@@ -45,7 +45,7 @@ type Game = {
 };
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-type SectionKey = "rules" | "players" | "round" | "purge" | "powerups" | "points";
+type SectionKey = "rules" | "players" | "round" | "purge" | "powerups" | "points" | "events";
 
 function GameSettingsPage() {
   const { gameId } = Route.useParams();
@@ -93,6 +93,7 @@ function GameSettingsPage() {
   const [puConfig, setPuConfig] = useState<PowerupConfig>(defaultPowerupConfig());
   const [spawnArea, setSpawnArea] = useState<SpawnArea | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [zoneDrawerFor, setZoneDrawerFor] = useState<string | null>(null);
 
   const load = async () => {
     const { data: g } = await supabase.from("games").select("*").eq("id", gameId).maybeSingle();
@@ -260,6 +261,7 @@ function GameSettingsPage() {
     { key: "purge", title: "Purge settings", subtitle: "Random and scheduled purges", icon: <Skull className="h-4 w-4" /> },
     { key: "powerups", title: "Powerups", subtitle: "Toggle, price, and configure each powerup", icon: <Zap className="h-4 w-4" /> },
     { key: "points", title: "Points & rewards", subtitle: "Points per elimination and powerup costs", icon: <Coins className="h-4 w-4" /> },
+    { key: "events", title: "Events", subtitle: "Post live events to the activity feed", icon: <Flag className="h-4 w-4" /> },
   ];
 
   const onBack = () => {
@@ -519,16 +521,40 @@ function GameSettingsPage() {
       {section === "powerups" && (
         <Panel>
           <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
-          <div className="space-y-2">
-            {POWERUPS.map((p) => (
-              <Toggle
-                key={p.type}
-                label={`${p.emoji} ${p.name}`}
-                hint={`${p.scope === "team" ? "Team • " : ""}${p.short}`}
-                checked={puConfig[p.type]?.enabled ?? true}
-                onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...puConfig[p.type], enabled: v } })}
-              />
-            ))}
+          <div className="space-y-3">
+            {POWERUPS.map((p) => {
+              const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zone: null };
+              return (
+                <div key={p.type} className="bg-card border border-border rounded-2xl p-3">
+                  <Toggle
+                    label={`${p.emoji} ${p.name}`}
+                    hint={`${p.scope === "team" ? "Team • " : ""}${p.short}`}
+                    checked={c.enabled}
+                    onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, enabled: v } })}
+                  />
+                  <div className="mt-2 pt-2 border-t border-border/60">
+                    <Toggle
+                      label="Purchase zone"
+                      hint="Players must be inside a drawn square to buy this powerup."
+                      checked={!!c.zoneEnabled}
+                      onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, zoneEnabled: v } })}
+                    />
+                    {c.zoneEnabled && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <button onClick={() => setZoneDrawerFor(p.type)}
+                          className="flex-1 h-9 rounded-lg bg-background border border-border text-xs font-semibold px-3 text-left">
+                          {c.zone ? "Edit zone square" : "Draw zone on map"}
+                        </button>
+                        {c.zone && (
+                          <button onClick={() => setPuConfig({ ...puConfig, [p.type]: { ...c, zone: null } })}
+                            className="text-[11px] text-danger px-2">Clear</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-4 pt-3 border-t border-border space-y-2">
@@ -539,7 +565,7 @@ function GameSettingsPage() {
           {puMapSpawn && (
             <div className="mt-4 bg-card border border-border rounded-xl p-3 space-y-4">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Map spawn rules</p>
-              <SliderRow label="Spawn area radius" value={puSpawnRadius} min={50} max={5000} step={50} onChange={setPuSpawnRadius} suffix="m" />
+              
               <div>
                 <p className="text-sm text-muted-foreground mb-1.5">Custom spawn area</p>
                 <button onClick={() => setDrawerOpen(true)}
@@ -592,11 +618,26 @@ function GameSettingsPage() {
           </div>
         </Panel>
       )}
+
+      {section === "events" && (
+        <EventsPanel gameId={game.id} hostId={user?.id ?? ""} />
+      )}
+
       <SpawnAreaDrawer
         open={drawerOpen}
         initial={spawnArea}
         onClose={() => setDrawerOpen(false)}
         onSave={(a) => setSpawnArea(a)}
+      />
+      <SpawnAreaDrawer
+        open={!!zoneDrawerFor}
+        initial={zoneDrawerFor ? (puConfig[zoneDrawerFor as keyof PowerupConfig]?.zone ?? null) : null}
+        onClose={() => setZoneDrawerFor(null)}
+        onSave={(a) => {
+          if (!zoneDrawerFor) return;
+          const key = zoneDrawerFor as keyof PowerupConfig;
+          setPuConfig({ ...puConfig, [key]: { ...puConfig[key], zone: a } });
+        }}
       />
     </div>
   );
@@ -656,5 +697,87 @@ function StepperRow({ label, value, step = 50, min = 0, max = 10000, onChange }:
         <button type="button" onClick={() => onChange(clamp(value + step))} className="h-8 w-8 rounded-lg bg-card border border-border text-sm font-bold">+</button>
       </div>
     </div>
+  );
+}
+
+const EVENT_TYPES: { value: string; label: string; emoji: string }[] = [
+  { value: "purge", label: "Purge started", emoji: "☠️" },
+  { value: "round", label: "Round update", emoji: "🏁" },
+  { value: "powerup", label: "Powerup drop", emoji: "⚡" },
+  { value: "spawn", label: "Spawn event", emoji: "📍" },
+  { value: "end", label: "Game end", emoji: "🏆" },
+  { value: "custom", label: "Custom announcement", emoji: "📣" },
+];
+
+function EventsPanel({ gameId, hostId }: { gameId: string; hostId: string }) {
+  const [type, setType] = useState("custom");
+  const [message, setMessage] = useState("");
+  const [events, setEvents] = useState<any[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("events").select("*").eq("game_id", gameId).order("created_at", { ascending: false }).limit(50);
+    setEvents(data ?? []);
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [gameId]);
+
+  const post = async () => {
+    const text = message.trim();
+    if (!text) { toast.error("Write a message first"); return; }
+    setBusy(true);
+    const { error } = await supabase.from("events").insert({ game_id: gameId, type, message: text, created_by: hostId });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setMessage("");
+    toast.success("Event posted to feed");
+    load();
+  };
+
+  return (
+    <Panel>
+      <p className="text-[11px] text-muted-foreground mb-3">Post a live event to the activity feed for everyone in the game.</p>
+      <div>
+        <p className="text-sm text-muted-foreground mb-1.5">Event type</p>
+        <div className="grid grid-cols-3 gap-2">
+          {EVENT_TYPES.map((t) => (
+            <button key={t.value} type="button" onClick={() => setType(t.value)}
+              className={`rounded-xl py-2 text-[11px] font-bold border ${type === t.value ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/70"}`}>
+              <span className="block text-base">{t.emoji}</span>{t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={3}
+        maxLength={280}
+        placeholder="e.g. The purge has begun. 30 minutes. No safe zones."
+        className="mt-3 w-full bg-card border border-border rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary"
+      />
+      <button disabled={busy} onClick={post}
+        className="mt-2 w-full h-11 rounded-xl bg-gradient-to-r from-primary to-secondary text-primary-foreground text-sm font-extrabold disabled:opacity-50">
+        Post event
+      </button>
+
+      <div className="mt-5 pt-4 border-t border-border">
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Recent events</p>
+        {events.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No events yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {events.map((e) => (
+              <li key={e.id} className="bg-card border border-border rounded-xl px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-primary font-bold">{e.type}</span>
+                  <span className="text-[10px] text-muted-foreground">{new Date(e.created_at).toLocaleString([], { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" })}</span>
+                </div>
+                <p className="text-sm mt-0.5">{e.message}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Panel>
   );
 }
