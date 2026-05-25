@@ -524,7 +524,8 @@ function GameSettingsPage() {
           <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
           <div className="space-y-3">
             {POWERUPS.map((p) => {
-              const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zone: null };
+              const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zones: [] };
+              const zones = c.zones ?? [];
               return (
                 <div key={p.type} className="bg-card border border-border rounded-2xl p-3">
                   <Toggle
@@ -535,8 +536,8 @@ function GameSettingsPage() {
                   />
                   <div className="mt-2 pt-2 border-t border-border/60">
                     <Toggle
-                      label="Purchase zone"
-                      hint="Players must be inside a drawn square to buy this powerup."
+                      label="Purchase zones"
+                      hint="Players must be inside one of the drawn squares to buy this powerup."
                       checked={!!c.zoneEnabled}
                       onChange={(v) => setPuConfig({ ...puConfig, [p.type]: { ...c, zoneEnabled: v } })}
                     />
@@ -544,10 +545,10 @@ function GameSettingsPage() {
                       <div className="mt-2 flex items-center gap-2">
                         <button onClick={() => setZoneDrawerFor(p.type)}
                           className="flex-1 h-9 rounded-lg bg-background border border-border text-xs font-semibold px-3 text-left">
-                          {c.zone ? "Edit zone square" : "Draw zone on map"}
+                          {zones.length > 0 ? `Edit zones (${zones.length})` : "Draw zones on map"}
                         </button>
-                        {c.zone && (
-                          <button onClick={() => setPuConfig({ ...puConfig, [p.type]: { ...c, zone: null } })}
+                        {zones.length > 0 && (
+                          <button onClick={() => setPuConfig({ ...puConfig, [p.type]: { ...c, zones: [] } })}
                             className="text-[11px] text-danger px-2">Clear</button>
                         )}
                       </div>
