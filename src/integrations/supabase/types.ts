@@ -225,6 +225,8 @@ export type Database = {
           name: string
           open_registration: boolean
           players_per_team: number
+          points_per_elimination: number
+          powerup_config: Json
           powerup_double_points: boolean
           powerup_map_spawn: boolean
           powerup_radar_ping: boolean
@@ -266,6 +268,8 @@ export type Database = {
           name: string
           open_registration?: boolean
           players_per_team?: number
+          points_per_elimination?: number
+          powerup_config?: Json
           powerup_double_points?: boolean
           powerup_map_spawn?: boolean
           powerup_radar_ping?: boolean
@@ -307,6 +311,8 @@ export type Database = {
           name?: string
           open_registration?: boolean
           players_per_team?: number
+          points_per_elimination?: number
+          powerup_config?: Json
           powerup_double_points?: boolean
           powerup_map_spawn?: boolean
           powerup_radar_ping?: boolean
@@ -399,7 +405,10 @@ export type Database = {
           id: string
           joined_at: string
           kills: number
+          points: number
           power_ups: Json
+          powerup_active: Json
+          powerup_inventory: Json
           rank: number | null
           status: string
           survival_days: number
@@ -412,7 +421,10 @@ export type Database = {
           id?: string
           joined_at?: string
           kills?: number
+          points?: number
           power_ups?: Json
+          powerup_active?: Json
+          powerup_inventory?: Json
           rank?: number | null
           status?: string
           survival_days?: number
@@ -425,7 +437,10 @@ export type Database = {
           id?: string
           joined_at?: string
           kills?: number
+          points?: number
           power_ups?: Json
+          powerup_active?: Json
+          powerup_inventory?: Json
           rank?: number | null
           status?: string
           survival_days?: number
