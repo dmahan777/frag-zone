@@ -99,7 +99,7 @@ function ProfilePage() {
           <Share2 className="h-5 w-5 text-primary" />
           <span className="font-semibold">Invite friends</span>
         </button>
-        <button onClick={() => navigate({ to: "/settings" })} className="w-full bg-card border border-border rounded-2xl p-4 flex items-center gap-3 active:scale-[0.99] transition">
+        <button onClick={() => navigate({ to: "/account" })} className="w-full bg-card border border-border rounded-2xl p-4 flex items-center gap-3 active:scale-[0.99] transition">
           <Settings className="h-5 w-5 text-muted-foreground" />
           <span className="font-semibold">Settings</span>
         </button>
