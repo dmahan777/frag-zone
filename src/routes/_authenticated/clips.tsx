@@ -127,6 +127,13 @@ function ClipsPage() {
               toast.success(`Clip ${status}`);
               setClips((cs) => cs.map((x) => x.id === c.id ? { ...x, status } : x));
             }}
+            onDelete={async () => {
+              if (!confirm("Delete this clip? This cannot be undone.")) return;
+              const { error } = await supabase.from("clips").delete().eq("id", c.id);
+              if (error) { toast.error(error.message); return; }
+              toast.success("Clip deleted");
+              setClips((cs) => cs.filter((x) => x.id !== c.id));
+            }}
           />
         ))}
       </div>
