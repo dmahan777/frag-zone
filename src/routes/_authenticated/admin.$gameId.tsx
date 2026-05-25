@@ -111,29 +111,40 @@ function AdminPage() {
   const confirmElim = async (e: Elim) => {
     setBusy(true);
     try {
-      // Mark eliminated player & reassign target chain
       const elimPlayer = players.find(p => p.user_id === e.eliminated_id);
       const killer = players.find(p => p.user_id === e.eliminator_id);
       if (!elimPlayer || !killer) throw new Error("Player not found");
 
-      // Pass eliminated player's target to killer
-      await supabase.from("players").update({
-        status: "eliminated",
-        target_id: null,
-      }).eq("id", elimPlayer.id);
+      const pointsPerElim = (game as any).points_per_elimination ?? 100;
+      // Bounty bonus: any player with active bounty on this victim transfers their reward to the killer
+      let bountyBonus = 0;
+      const { data: allPlayers } = await supabase.from("players").select("user_id, powerup_active, points").eq("game_id", game.id);
+      for (const ap of allPlayers ?? []) {
+        const b = (ap as any).powerup_active?.bounty;
+        if (b?.active && b.targetId === e.eliminated_id) {
+          bountyBonus += Number(b.pointsReward) || 0;
+          const cleared = { ...(ap as any).powerup_active };
+          delete cleared.bounty;
+          await supabase.from("players").update({ powerup_active: cleared } as never).eq("user_id", (ap as any).user_id).eq("game_id", game.id);
+        }
+      }
+      const totalPoints = pointsPerElim + bountyBonus;
 
+      await supabase.from("players").update({ status: "eliminated", target_id: null } as never).eq("id", elimPlayer.id);
       await supabase.from("players").update({
         kills: (killer.kills ?? 0) + 1,
         target_id: elimPlayer.target_id,
-      }).eq("id", killer.id);
+        points: ((killer as any).points ?? 0) + totalPoints,
+      } as never).eq("id", killer.id);
 
-      await supabase.from("eliminations").update({ status: "confirmed", points_awarded: 10 }).eq("id", e.id);
+      await supabase.from("eliminations").update({ status: "confirmed", points_awarded: totalPoints } as never).eq("id", e.id);
 
       const killerName = profiles[e.eliminator_id]?.username ?? "?";
       const victimName = profiles[e.eliminated_id]?.username ?? "?";
+      const bountyTxt = bountyBonus ? ` (+${bountyBonus} bounty!)` : "";
       await supabase.from("events").insert({
         game_id: game.id, type: "elimination", created_by: user!.id,
-        message: `💀 @${killerName} fragged @${victimName}`,
+        message: `💀 @${killerName} fragged @${victimName} — +${totalPoints}pts${bountyTxt}`,
       });
       toast.success("Confirmed");
     } catch (err) { toast.error((err as Error).message); }
