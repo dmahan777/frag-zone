@@ -521,7 +521,7 @@ function GameSettingsPage() {
 
       {section === "powerups" && (
         <Panel>
-          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup on/off. Set cost in the Points & rewards panel.</p>
+          <p className="text-[11px] text-muted-foreground mb-3">Toggle each powerup, set how long it lasts, and where it can be bought. Prices live in Points & rewards.</p>
           <div className="space-y-3">
             {POWERUPS.map((p) => {
               const c = puConfig[p.type] ?? { enabled: true, cost: p.defaultCost, scope: p.scope, zoneEnabled: false, zones: [] };
